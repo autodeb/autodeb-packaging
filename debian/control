@@ -28,3 +28,14 @@ Description: main server for autodeb
  versions or to backport them.
  .
  This package contains the main server.
+
+Package: autodeb-worker
+Architecture: any
+Built-Using: ${misc:Built-Using}
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+Description: autodeb worker
+ autodeb tries to automatically update Debian packages to newer upstream
+ versions or to backport them.
+ .
+ This package contains the worker.
