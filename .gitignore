@@ -2,6 +2,7 @@
 /list-packages-with-newer-upstream-versions
 /update-random-package
 /autodeb-server
+/autodeb-worker
 
 # Other things created by the Makefile
 /data
@@ -10,5 +11,3 @@
 # stuff produced at runtime
 /update-random-package-output-*
 /database.sqlite
-
-.pc
