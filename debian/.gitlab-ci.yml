@@ -1,0 +1,33 @@
+image: debian:unstable
+
+variables:
+    GIT_STRATEGY: clone
+    DEBEMAIL: autodeb@alexandreviau.net
+
+pages:
+    stage: deploy
+    only:
+        - /^pages\/.*$/
+    before_script:
+        # Install build deps
+        - apt-get update
+        - apt-get install -y devscripts gpg git-buildpackage pristine-tar
+        - echo Y | sudo mk-build-deps -i -r
+        # Install the archive key
+#        - echo "$AUTODEB_ARCHIVE_KEY" > archive-key
+#        - gpg --import archive-key
+#        - rm archive-key
+        # Checkout the last tarball
+        - pristine-tar checkout $(pristine-tar list | head -n 1)
+        - mv *.orig.tar.gz ../
+    script:
+        # Build the package
+        - dpkg-buildpackage
+        # Publish the package
+        - rm -rf public
+        - mkdir public
+        - mv ../autodeb-server_*.deb public/autodeb-server_latest.deb
+        - mv ../autodeb-worker_*.deb public/autodeb-worker_latest.deb
+    artifacts:
+        paths:
+            - public
