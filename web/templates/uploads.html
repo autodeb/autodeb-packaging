@@ -1,0 +1,28 @@
+{{ define "title" }}Uploads{{ end }}
+
+{{ define "content" }}
+
+<p>This page lists all uploads:</p>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Source Package</th>
+        <th>Version</th>
+        <th>Maintainer</th>
+        <th>ChangedBy</th>
+    </tr>
+
+    {{ range $.Uploads }}
+    <tr>
+        <td>{{ .ID }}</td>
+        <td>{{ .Source }}</td>
+        <td>{{ .Version }}</td>
+        <td>{{ .Maintainer }}</td>
+        <td>{{ .ChangedBy }}</td>
+    </tr>
+    {{ end }}
+
+</table>
+
+{{ end }}
