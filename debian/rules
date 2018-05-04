@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+export DH_GOLANG_EXCLUDES := cmd/update-random-package \
+                             cmd/list-packages-with-newer-upstream-versions
+
+override_dh_auto_install:
+	dh_auto_install -- --no-source
+%:
+	dh $@ --buildsystem=golang --with=golang

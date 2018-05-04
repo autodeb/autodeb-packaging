@@ -1,0 +1,5 @@
+autodeb (0.1-1) UNRELEASED; urgency=medium
+
+  * Initial release (Closes: #645467)
+
+ -- Alexandre Viau <aviau@debian.org>  Fri, 04 May 2018 15:14:08 -0400

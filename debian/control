@@ -1,0 +1,30 @@
+Source: autodeb
+Section: net
+Priority: optional
+Maintainer: Alexandre Viau <aviau@debian.org>
+Build-Depends: debhelper (>= 11),
+               dh-golang,
+               golang-any,
+               golang-github-gorilla-mux-dev,
+               golang-github-jinzhu-gorm-dev,
+               golang-github-pkg-errors-dev,
+               golang-github-spf13-afero-dev,
+               golang-github-stretchr-testify-dev,
+               golang-pault-go-debian-dev
+Standards-Version: 4.1.3
+Homepage: https://salsa.debian.org/autodeb-team/autodeb
+Vcs-Browser: https://salsa.debian.org/autodeb-team/autodeb-packaging
+Vcs-Git: https://salsa.debian.org/autodeb-team/autodeb-packaging.git
+XS-Go-Import-Path: salsa.debian.org/autodeb-team/autodeb
+Testsuite: autopkgtest-pkg-go
+
+Package: autodeb-server
+Architecture: any
+Built-Using: ${misc:Built-Using}
+Depends: ${misc:Depends},
+         ${shlibs:Depends}
+Description: main server for autodeb
+ autodeb tries to automatically update Debian packages to newer upstream
+ versions or to backport them.
+ .
+ This package contains the main server.
