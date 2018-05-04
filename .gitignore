@@ -10,3 +10,5 @@
 # stuff produced at runtime
 /update-random-package-output-*
 /database.sqlite
+
+.pc
