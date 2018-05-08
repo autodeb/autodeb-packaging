@@ -22,7 +22,8 @@ Package: autodeb-server
 Architecture: any
 Built-Using: ${misc:Built-Using}
 Depends: ${misc:Depends},
-         ${shlibs:Depends}
+         ${shlibs:Depends},
+         adduser
 Description: main server for autodeb
  autodeb tries to automatically update Debian packages to newer upstream
  versions or to backport them.
@@ -33,7 +34,8 @@ Package: autodeb-worker
 Architecture: any
 Built-Using: ${misc:Built-Using}
 Depends: ${misc:Depends},
-         ${shlibs:Depends}
+         ${shlibs:Depends},
+         adduser
 Description: runs autodeb jobs
  autodeb tries to automatically update Debian packages to newer upstream
  versions or to backport them.

@@ -1,0 +1,18 @@
+[Unit]
+Description=Autodeb Server
+After=network.target
+
+[Service]
+User=autodeb
+Group=autodeb
+WorkingDirectory=/var/lib/autodeb/server
+EnvironmentFile=/etc/default/autodeb-server
+ExecStart=/usr/bin/autodeb-sever \
+                    -address=${ADDRESS} \
+                    -port=${PORT} \
+                    -templates-directory=${TEMPLATES_DIRECTORY} \
+                    -static-files-directory=${STATIC_FILES_DIRECTORY} \
+                    -data-directory=${DATA_DIRECTORY} \
+                    -database-driver=${DATABASE_DRIVER} \
+                    -database-connection-string=${DATABASE_CONNECTION_STRING}
+Restart=on-failure

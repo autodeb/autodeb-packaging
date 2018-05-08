@@ -1,0 +1,11 @@
+[Unit]
+Description=Autodeb Worker
+After=network.target
+
+[Service]
+User=autodeb
+Group=autodeb
+WorkingDirectory=/var/lib/autodeb/worker
+EnvironmentFile=/etc/default/autodeb-worker
+ExecStart=/usr/bin/autodeb-worker ${AUTODEB_WORKER_OPTS}
+Restart=on-failure
