@@ -18,8 +18,7 @@ pages:
 #        - gpg --import archive-key
 #        - rm archive-key
         # Checkout the last tarball
-        - pristine-tar checkout $(pristine-tar list | head -n 1)
-        - mv *.orig.tar.gz ../
+        - gbp export-orig
     script:
         # Build the package
         - dpkg-buildpackage
