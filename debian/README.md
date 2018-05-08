@@ -6,6 +6,8 @@ It is used to produce two types of packages:
  - Official Debian packages (uploaded to the Debian archive)
  - Unofficial Debian packages (published on gitlab pages)
 
+This repository is buildable with git-buildpackage.
+
 ## Unofficial Debian packages
 
 Unofficial Debian packages are built on gitlab and published on gitlab pages:
