@@ -1,4 +1,4 @@
-autodeb (0.2.2-1) UNRELEASED; urgency=medium
+autodeb (0.2.2-1) pages; urgency=medium
 
   * Initial release (Closes: #645467)
 
