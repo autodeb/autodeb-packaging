@@ -24,7 +24,7 @@ case "$1" in
       # Only remove /var/lib/autodeb/server on purge
       if [ "${1}" = "purge" ] ; then
           rm -rf /var/lib/autodeb/server
-          if [ ! -d /var/lib/syncthing/worker ]; then
+          if [ ! -d /var/lib/autodeb/worker ]; then
               rm -rf /var/lib/autodeb
           fi
       fi
