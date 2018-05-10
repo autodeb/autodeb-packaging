@@ -18,6 +18,7 @@ You may chat with us at [#autodeb on irc.debian.org](irc://irc.debian.org:6667/a
  - [autodeb-server dependency graph](https://autodeb-team.pages.debian.net/autodeb/dependency-graph-autodeb-server.svg): helpful to understand the autodeb-server software architecture
  - [godoc](https://godoc.org/salsa.debian.org/autodeb-team/autodeb): code documentation
  - [Packaging (other repository)](https://salsa.debian.org/autodeb-team/autodeb-packaging/blob/master/debian/README.md): Debian packaging for autodeb
+ - [Infrastructure (other repository)](https://salsa.debian.org/autodeb-team/infrastructure): Contains the ansible scripts for auto.debian.net
  - [Wiki](https://salsa.debian.org/autodeb-team/autodeb/wikis/home): everything else
 
 ## Available executables
@@ -28,7 +29,7 @@ You may chat with us at [#autodeb on irc.debian.org](irc://irc.debian.org:6667/a
 
 - ``autodeb-server``: This is the server component of the system. It provides a web interface, a REST API and dput-compatible interface.
 
-- ``autodeb-runner``: TODO. This executable is not yet available.
+- ``autodeb-worker``: This is the worker component of the system. It retrieves jobs from the main server and executes them.
 
 ## Getting started
 

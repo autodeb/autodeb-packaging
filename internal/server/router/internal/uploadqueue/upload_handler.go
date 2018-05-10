@@ -1,15 +1,15 @@
-package api
+package uploadqueue
 
 import (
 	"net/http"
 
 	"salsa.debian.org/autodeb-team/autodeb/internal/errorchecks"
-	"salsa.debian.org/autodeb-team/autodeb/internal/htmltemplate"
-	"salsa.debian.org/autodeb-team/autodeb/internal/server/api/uploadparametersparser"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/router/internal/uploadqueue/uploadparametersparser"
 )
 
-func uploadHandler(renderer *htmltemplate.Renderer, app *app.App) http.Handler {
+//UploadHandler returns a handler that accepts http package uploads
+func UploadHandler(app *app.App) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 
 		uploadParameters, err := uploadparametersparser.Parse(r)
