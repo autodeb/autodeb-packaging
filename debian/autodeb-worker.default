@@ -1,2 +1,3 @@
 # Default settings for autodeb-worker
+WORKING_DIRECTORY='/var/lib/autodeb/worker'
 AUTODEB_WORKER_OPTS=''

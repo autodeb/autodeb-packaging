@@ -1,1 +1,2 @@
 usr/bin/autodeb-worker
+debian/autodeb-worker.conf etc
