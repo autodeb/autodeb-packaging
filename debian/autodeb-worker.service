@@ -11,5 +11,6 @@ EnvironmentFile=/etc/autodeb-worker.conf
 ExecStart=/usr/bin/autodeb-worker \
                         -working-directory=${WORKING_DIRECTORY} \
                         -server-url=${SERVER_URL} \
+                        -runner-count=${RUNNER_COUNT} \
                         ${AUTODEB_WORKER_OPTS}
 Restart=on-failure
