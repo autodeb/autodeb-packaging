@@ -1,7 +1,7 @@
 # Default settings for autodeb-server
-AUTODEB_SERVER_OPTS=''
 TEMPLATES_DIRECTORY='/usr/share/autodeb/web/templates'
 STATIC_FILES_DIRECTORY='/usr/share/autodeb/web/static'
 DATA_DIRECTORY='/var/lib/autodeb/server'
 DATABASE_DRIVER='sqlite3'
 DATABASE_CONNECTION_STRING='/var/lib/autodeb/server/database.sqlite'
+AUTODEB_SERVER_OPTS=''
