@@ -36,7 +36,9 @@ Architecture: any
 Built-Using: ${misc:Built-Using}
 Depends: ${misc:Depends},
          ${shlibs:Depends},
-         adduser
+         adduser,
+         sbuild,
+         devscripts
 Description: runs autodeb jobs
  autodeb tries to automatically update Debian packages to newer upstream
  versions or to backport them.

@@ -20,24 +20,28 @@ set -e
 
 case "$1" in
     configure|reconfigure)
-    # create an autodeb group and user
+
+        # create an autodeb group and user
         if ! grep -q autodeb /etc/passwd; then
         adduser --system --home /var/lib/autodeb --no-create-home autodeb
         addgroup --system autodeb
         adduser autodeb autodeb
         fi
 
-    # setup /var/lib/autodeb
-    if [ ! -d /var/lib/autodeb ]; then
-        mkdir -p /var/lib/autodeb
-    fi
-    chown autodeb:autodeb /var/lib/autodeb
+        # Add the autodeb user to the sbuild group
+        addgroup autodeb sbuild
 
-    # setup /var/lib/autodeb/worker
-    if [ ! -d /var/lib/autodeb/worker ]; then
-        mkdir -p /var/lib/autodeb/worker
-    fi
-    chown autodeb:autodeb /var/lib/autodeb/worker
+        # setup /var/lib/autodeb
+        if [ ! -d /var/lib/autodeb ]; then
+            mkdir -p /var/lib/autodeb
+        fi
+        chown autodeb:autodeb /var/lib/autodeb
+
+        # setup /var/lib/autodeb/worker
+        if [ ! -d /var/lib/autodeb/worker ]; then
+            mkdir -p /var/lib/autodeb/worker
+        fi
+        chown autodeb:autodeb /var/lib/autodeb/worker
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
