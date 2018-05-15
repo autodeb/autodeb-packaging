@@ -14,3 +14,6 @@ ExecStart=/usr/bin/autodeb-worker \
                         -runner-count=${RUNNER_COUNT} \
                         ${AUTODEB_WORKER_OPTS}
 Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

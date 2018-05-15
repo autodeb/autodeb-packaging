@@ -15,3 +15,6 @@ ExecStart=/usr/bin/autodeb-server \
                     -database-connection-string=${DATABASE_CONNECTION_STRING} \
                     ${AUTODEB_SERVER_OPTS}
 Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
