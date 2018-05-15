@@ -7,6 +7,7 @@ User=autodeb
 Group=autodeb
 WorkingDirectory=/var/lib/autodeb/server
 EnvironmentFile=/etc/default/autodeb-server
+EnvironmentFile=/etc/autodeb-server.conf
 ExecStart=/usr/bin/autodeb-server \
                     -templates-directory=${TEMPLATES_DIRECTORY} \
                     -static-files-directory=${STATIC_FILES_DIRECTORY} \
