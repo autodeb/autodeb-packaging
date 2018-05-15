@@ -1,25 +1,25 @@
 package sbuild
 
 import (
-	"fmt"
+	"context"
 	"io"
-	"os"
 	"os/exec"
 )
 
 //Build a package
-func Build(directory string, outputWriter, errorWriter io.Writer) error {
-	command := exec.Command(
+func Build(ctx context.Context, directory string, outputWriter, errorWriter io.Writer) error {
+	command := exec.CommandContext(
+		ctx,
 		"sbuild",
 		"--no-clean-source",
+		"--nolog",
 	)
 	command.Dir = directory
 	command.Stdout = outputWriter
 	command.Stderr = errorWriter
-	command.Stdin = os.Stdin // TODO: remove this
 
 	if err := command.Run(); err != nil {
-		return fmt.Errorf("sbuild error: %s", err)
+		return err
 	}
 
 	return nil

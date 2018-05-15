@@ -3,9 +3,13 @@
 package server
 
 import (
+	"context"
+	"io"
+
 	"salsa.debian.org/autodeb-team/autodeb/internal/filesystem"
 	"salsa.debian.org/autodeb-team/autodeb/internal/htmltemplate"
 	"salsa.debian.org/autodeb-team/autodeb/internal/http"
+	"salsa.debian.org/autodeb-team/autodeb/internal/log"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/database"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/router"
@@ -18,7 +22,7 @@ type Server struct {
 }
 
 // New creates a Server
-func New(cfg *Config) (*Server, error) {
+func New(cfg *Config, loggingOutput io.Writer) (*Server, error) {
 	db, err := database.NewDatabase(cfg.DB.Driver, cfg.DB.ConnectionString)
 	if err != nil {
 		return nil, err
@@ -52,7 +56,10 @@ func New(cfg *Config) (*Server, error) {
 		app,
 	)
 
-	httpServer, err := http.NewHTTPServer(cfg.HTTP.Address, cfg.HTTP.Port, router)
+	logger := log.New(loggingOutput)
+	logger.SetLevel(cfg.LogLevel)
+
+	httpServer, err := http.NewHTTPServer(cfg.HTTP.Address, cfg.HTTP.Port, router, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +71,7 @@ func New(cfg *Config) (*Server, error) {
 	return &server, nil
 }
 
-// Close will shutdown the server
-func (srv *Server) Close() error {
-	return srv.httpServer.Close()
+// Shutdown will gracefully stop the server
+func (srv *Server) Shutdown(ctx context.Context) error {
+	return srv.httpServer.Shutdown(ctx)
 }

@@ -8,11 +8,12 @@ import (
 	"io"
 	"io/ioutil"
 
+	"salsa.debian.org/autodeb-team/autodeb/internal/log"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server"
 )
 
 // Parse reads arguments and creates an autodeb server config
-func Parse(args []string, writerOutput, writerError io.Writer) (*server.Config, error) {
+func Parse(args []string, writerOutput io.Writer) (*server.Config, error) {
 
 	fs := flag.NewFlagSet("autodeb-server", flag.ContinueOnError)
 	fs.SetOutput(ioutil.Discard)
@@ -45,6 +46,9 @@ func Parse(args []string, writerOutput, writerError io.Writer) (*server.Config, 
 	var databaseConnectionString string
 	fs.StringVar(&databaseConnectionString, "database-connection-string", "database.sqlite", "database connection string")
 
+	var logLevelString string
+	fs.StringVar(&logLevelString, "log-level", "info", "info, warning or error")
+
 	if err := fs.Parse(args); err != nil {
 		return nil, err
 	}
@@ -61,6 +65,18 @@ func Parse(args []string, writerOutput, writerError io.Writer) (*server.Config, 
 		return nil, nil
 	}
 
+	var logLevel log.Level
+	switch logLevelString {
+	case "info":
+		logLevel = log.InfoLevel
+	case "warning":
+		logLevel = log.WarningLevel
+	case "error":
+		logLevel = log.ErrorLevel
+	default:
+		return nil, fmt.Errorf("unrecognized log level: %s", logLevelString)
+	}
+
 	cfg := &server.Config{
 		HTTP: server.HTTPServerConfig{
 			Address: address,
@@ -74,6 +90,7 @@ func Parse(args []string, writerOutput, writerError io.Writer) (*server.Config, 
 		TemplatesDirectory:    templatesDirectory,
 		StaticFilesDirectory:  staticFilesDirectory,
 		TemplatesCacheEnabled: cacheTemplates,
+		LogLevel:              logLevel,
 	}
 
 	return cfg, nil

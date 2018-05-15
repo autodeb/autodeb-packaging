@@ -1,9 +1,9 @@
-package worker
+package jobrunner
 
 import (
-	"fmt"
+	"context"
+	"io"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"salsa.debian.org/autodeb-team/autodeb/internal/exec/dget"
@@ -11,16 +11,9 @@ import (
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/models"
 )
 
-func (w *Worker) execBuild(job *models.Job) error {
-	workingDirectory := filepath.Join(w.workingDirectory, fmt.Sprint(job.ID))
-
-	// Create the job directory
-	if err := os.Mkdir(workingDirectory, 0755); err != nil {
-		return err
-	}
-
+func (jobRunner *JobRunner) execBuild(ctx context.Context, job *models.Job, workingDirectory string, logFile io.Writer) error {
 	// Get the .dsc URL
-	dscURL := w.apiClient.GetUploadDSCURL(job.UploadID)
+	dscURL := jobRunner.apiClient.GetUploadDSCURL(job.UploadID)
 
 	// Download the source
 	if err := dget.Dget(dscURL.String(), workingDirectory); err != nil {
@@ -33,12 +26,12 @@ func (w *Worker) execBuild(job *models.Job) error {
 		return err
 	}
 	if numDirs := len(dirs); numDirs != 1 {
-		return fmt.Errorf("unexpected number of directories: %v", numDirs)
+		return err
 	}
 	sourceDirectory := filepath.Join(workingDirectory, dirs[0])
 
 	// Run sbuild
-	if err := sbuild.Build(sourceDirectory, w.writerOutput, w.writerError); err != nil {
+	if err := sbuild.Build(ctx, sourceDirectory, logFile, logFile); err != nil {
 		return err
 	}
 
