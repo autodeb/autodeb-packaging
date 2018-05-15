@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -16,7 +17,7 @@ func main() {
 	args := os.Args[1:]
 
 	// Parse the command-line args
-	cfg, err := cli.Parse(args, os.Stdout, os.Stderr)
+	cfg, err := cli.Parse(args, os.Stdout)
 	if err != nil {
 		printErrorAndExit(err)
 	}
@@ -28,23 +29,37 @@ func main() {
 	fmt.Fprintf(os.Stdout, "Starting autodeb API on %v:%d.\n", cfg.HTTP.Address, cfg.HTTP.Port)
 
 	// Start the server
-	srv, err := server.New(cfg)
+	srv, err := server.New(cfg, os.Stderr)
 	if err != nil {
 		printErrorAndExit(err)
 	}
 
-	// Handle SIGINT
+	// Wait for SIGINT
+	sigchan := make(chan os.Signal)
+	signal.Notify(sigchan, os.Interrupt)
+	<-sigchan
+
+	// SIGINT received, shutdown...
+	fmt.Println("\nShutting down the server. Send SIGINT again to force quit.")
+
+	// Create a context, cancel it if we receive SIGINT again
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
 	go func() {
-		sigchan := make(chan os.Signal, 10)
+		sigchan := make(chan os.Signal)
 		signal.Notify(sigchan, os.Interrupt)
-		<-sigchan
-		fmt.Println("\nStopping server...")
-		srv.Close()
-		os.Exit(0)
+		select {
+		case <-sigchan:
+			fmt.Println("\nForcing quit...")
+			cancelCtx()
+		}
 	}()
 
-	// Wait for SIGINT
-	select {}
+	// Shutdown the server, this blocks until the shutdown is complete
+	// or until we cancel the context
+	if err := srv.Shutdown(ctx); err != nil {
+		fmt.Println(err)
+	}
 }
 
 func printErrorAndExit(err error) {

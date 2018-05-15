@@ -16,7 +16,7 @@ func main() {
 	args := os.Args[1:]
 
 	// Parse the command-line args
-	cfg, err := cli.Parse(args, os.Stdout, os.Stderr)
+	cfg, err := cli.Parse(args, os.Stdout)
 	if err != nil {
 		printErrorAndExit(err)
 	}
@@ -28,23 +28,21 @@ func main() {
 	fmt.Fprintln(os.Stdout, "Starting autodeb worker.")
 
 	// Start the server
-	worker, err := worker.New(cfg)
+	worker, err := worker.New(cfg, os.Stderr)
 	if err != nil {
 		printErrorAndExit(err)
 	}
 
-	// Handle SIGINT
-	go func() {
-		sigchan := make(chan os.Signal, 10)
-		signal.Notify(sigchan, os.Interrupt)
-		<-sigchan
-		fmt.Println("\nStopping worker...")
-		worker.Close()
-		os.Exit(0)
-	}()
-
 	// Wait for SIGINT
-	select {}
+	sigchan := make(chan os.Signal)
+	signal.Notify(sigchan, os.Interrupt)
+	<-sigchan
+
+	fmt.Println("\nShutting down the worker.")
+
+	if err := worker.Shutdown(); err != nil {
+		fmt.Println(err)
+	}
 }
 
 func printErrorAndExit(err error) {

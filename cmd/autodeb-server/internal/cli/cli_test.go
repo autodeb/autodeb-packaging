@@ -12,11 +12,10 @@ import (
 
 type cliTest struct {
 	outputWriter bytes.Buffer
-	errorWriter  bytes.Buffer
 }
 
 func (cliTest *cliTest) Parse(args ...string) (*server.Config, error) {
-	return cli.Parse(args, &cliTest.outputWriter, &cliTest.errorWriter)
+	return cli.Parse(args, &cliTest.outputWriter)
 }
 
 func testSetup() *cliTest {
@@ -31,4 +30,16 @@ func TestEmptyArgsNoError(t *testing.T) {
 
 	assert.NotNil(t, cfg)
 	assert.NoError(t, err)
+}
+
+func TestUnrecognizedLogLevel(t *testing.T) {
+	cliTest := testSetup()
+
+	cfg, err := cliTest.Parse(
+		"-log-level=potato",
+	)
+
+	assert.Nil(t, cfg)
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unrecognized log level: potato")
 }

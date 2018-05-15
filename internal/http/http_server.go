@@ -2,9 +2,12 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
+
+	"salsa.debian.org/autodeb-team/autodeb/internal/log"
 )
 
 // Server is an http.Server and its listener
@@ -14,9 +17,9 @@ type Server struct {
 }
 
 // NewHTTPServer starts a logged http server on the given address
-func NewHTTPServer(address string, port int, router http.Handler) (*Server, error) {
+func NewHTTPServer(address string, port int, router http.Handler, logger log.Logger) (*Server, error) {
 	// Create the logged handler
-	loggedHandler := logHandler(router)
+	loggedHandler := logHandler(router, logger)
 
 	listenAddress := fmt.Sprintf("%s:%d", address, port)
 
@@ -41,11 +44,10 @@ func NewHTTPServer(address string, port int, router http.Handler) (*Server, erro
 	return &server, nil
 }
 
-// Close will shutdown the listener and the http server
-func (srv *Server) Close() error {
+// Shutdown will close the listener and the shutdown http server
+func (srv *Server) Shutdown(ctx context.Context) error {
 	srv.listener.Close()
-	srv.httpServer.Close()
-	return nil
+	return srv.httpServer.Shutdown(ctx)
 }
 
 // Port of the listener
