@@ -1,5 +1,5 @@
-autodeb (0.5.1-1) UNRELEASED; urgency=medium
+autodeb (0.5.1-1) pages; urgency=medium
 
-  * Initial release (Closes: #645467)
+  * Unofficial Debian package.
 
- -- Alexandre Viau <aviau@debian.org>  Mon, 14 May 2018 23:34:13 -0400
+ -- Alexandre Viau <aviau@debian.org>  Tue, 15 May 2018 03:13:59 -0400
