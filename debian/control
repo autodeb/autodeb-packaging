@@ -12,6 +12,7 @@ Build-Depends: debhelper (>= 11),
                golang-github-stretchr-testify-dev,
                golang-github-sirupsen-logrus-dev,
                golang-golang-x-sys-dev,
+               golang-github-gorilla-sessions-dev,
                golang-pault-go-debian-dev
 Standards-Version: 4.1.3
 Homepage: https://salsa.debian.org/autodeb-team/autodeb
