@@ -9,8 +9,9 @@ WorkingDirectory=/var/lib/autodeb/worker
 EnvironmentFile=/etc/default/autodeb-worker
 EnvironmentFile=/etc/autodeb-worker.conf
 ExecStart=/usr/bin/autodeb-worker \
-                        -working-directory=${WORKING_DIRECTORY} \
                         -server-url=${SERVER_URL} \
+                        -working-directory=${WORKING_DIRECTORY} \
+                        -log-level=${LOG_LEVEL} \
                         -runner-count=${RUNNER_COUNT} \
                         ${AUTODEB_WORKER_OPTS}
 Restart=on-failure

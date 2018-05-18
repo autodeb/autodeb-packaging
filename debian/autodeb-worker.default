@@ -1,4 +1,6 @@
 # Default settings for autodeb-worker
+SERVER_URL='http://localhost:8071'
 WORKING_DIRECTORY='/var/lib/autodeb/worker'
+LOG_LEVEL='info'
 RUNNER_COUNT='1'
 AUTODEB_WORKER_OPTS=''
