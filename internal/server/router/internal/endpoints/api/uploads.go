@@ -10,13 +10,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"salsa.debian.org/autodeb-team/autodeb/internal/http/decorators"
+	"salsa.debian.org/autodeb-team/autodeb/internal/http/middleware"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
 )
 
 //UploadDSCGetHandler returns handler the DSC of the upload
 func UploadDSCGetHandler(app *app.App) http.Handler {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
 		uploadID, err := strconv.Atoi(vars["uploadID"])
@@ -39,14 +39,16 @@ func UploadDSCGetHandler(app *app.App) http.Handler {
 		io.Copy(w, dsc)
 	}
 
-	handler = decorators.TextPlainHeaders(handler)
+	handler := http.Handler(http.HandlerFunc(handlerFunc))
 
-	return http.HandlerFunc(handler)
+	handler = middleware.TextPlainHeaders(handler)
+
+	return handler
 }
 
 //UploadFilesGetHandler returns a handler that lists all files for an upload
 func UploadFilesGetHandler(app *app.App) http.Handler {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
 		uploadID, err := strconv.Atoi(vars["uploadID"])
@@ -72,14 +74,16 @@ func UploadFilesGetHandler(app *app.App) http.Handler {
 		fmt.Fprint(w, jsonFileUploads)
 	}
 
-	handler = decorators.JSONHeaders(handler)
+	handler := http.Handler(http.HandlerFunc(handlerFunc))
 
-	return http.HandlerFunc(handler)
+	handler = middleware.JSONHeaders(handler)
+
+	return handler
 }
 
 //UploadFileGetHandler returns a handler that returns upload files
 func UploadFileGetHandler(app *app.App) http.Handler {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
 
@@ -112,5 +116,5 @@ func UploadFileGetHandler(app *app.App) http.Handler {
 		io.Copy(w, file)
 	}
 
-	return http.HandlerFunc(handler)
+	return http.HandlerFunc(handlerFunc)
 }

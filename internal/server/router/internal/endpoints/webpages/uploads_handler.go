@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"salsa.debian.org/autodeb-team/autodeb/internal/htmltemplate"
-	"salsa.debian.org/autodeb-team/autodeb/internal/http/decorators"
+	"salsa.debian.org/autodeb-team/autodeb/internal/http/middleware"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/models"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/router/internal/auth"
 )
 
 //UploadsGetHandler returns a handler that renders the uploads page
-func UploadsGetHandler(renderer *htmltemplate.Renderer, app *app.App) http.Handler {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+func UploadsGetHandler(app *app.App) http.Handler {
+	handlerFunc := func(w http.ResponseWriter, r *http.Request, user *models.User) {
 
 		uploads, err := app.GetAllUploads()
 		if err != nil {
@@ -21,12 +21,14 @@ func UploadsGetHandler(renderer *htmltemplate.Renderer, app *app.App) http.Handl
 		}
 
 		data := struct {
+			User    *models.User
 			Uploads []*models.Upload
 		}{
+			User:    user,
 			Uploads: uploads,
 		}
 
-		rendered, err := renderer.RenderTemplate(data, "base.html", "uploads.html")
+		rendered, err := app.TemplatesRenderer().RenderTemplate(data, "base.html", "uploads.html")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -35,7 +37,9 @@ func UploadsGetHandler(renderer *htmltemplate.Renderer, app *app.App) http.Handl
 		fmt.Fprint(w, rendered)
 	}
 
-	handler = decorators.HTMLHeaders(handler)
+	handler := auth.MaybeWithUser(handlerFunc, app)
 
-	return http.HandlerFunc(handler)
+	handler = middleware.HTMLHeaders(handler)
+
+	return handler
 }

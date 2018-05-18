@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"salsa.debian.org/autodeb-team/autodeb/internal/htmltemplate"
-	"salsa.debian.org/autodeb-team/autodeb/internal/http/decorators"
+	"salsa.debian.org/autodeb-team/autodeb/internal/http/middleware"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/models"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/router/internal/auth"
 )
 
 //JobsGetHandler returns a handler that renders the jobs page
-func JobsGetHandler(renderer *htmltemplate.Renderer, app *app.App) http.Handler {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+func JobsGetHandler(app *app.App) http.Handler {
+	handlerFunc := func(w http.ResponseWriter, r *http.Request, user *models.User) {
 
 		jobs, err := app.GetAllJobs()
 		if err != nil {
@@ -21,12 +21,14 @@ func JobsGetHandler(renderer *htmltemplate.Renderer, app *app.App) http.Handler 
 		}
 
 		data := struct {
+			User *models.User
 			Jobs []*models.Job
 		}{
+			User: user,
 			Jobs: jobs,
 		}
 
-		rendered, err := renderer.RenderTemplate(data, "base.html", "jobs.html")
+		rendered, err := app.TemplatesRenderer().RenderTemplate(data, "base.html", "jobs.html")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -35,7 +37,9 @@ func JobsGetHandler(renderer *htmltemplate.Renderer, app *app.App) http.Handler 
 		fmt.Fprint(w, rendered)
 	}
 
-	handler = decorators.HTMLHeaders(handler)
+	handler := auth.MaybeWithUser(handlerFunc, app)
 
-	return http.HandlerFunc(handler)
+	handler = middleware.HTMLHeaders(handler)
+
+	return handler
 }

@@ -1,4 +1,4 @@
-package decorators_test
+package middleware_test
 
 import (
 	"fmt"
@@ -6,15 +6,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"salsa.debian.org/autodeb-team/autodeb/internal/http/decorators"
+	"salsa.debian.org/autodeb-team/autodeb/internal/http/middleware"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestHTMLHeaders(t *testing.T) {
+func TestJSONHeaders(t *testing.T) {
 	// Create an empty handler
 	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, `Hello World`)
+		fmt.Fprint(w, `{"hello": "world"}`)
 	}
-	handler := http.HandlerFunc(handlerFunc)
+	handler := http.Handler(http.HandlerFunc(handlerFunc))
 
 	// Test the empty handler
 	request, _ := http.NewRequest("GET", "/", nil)
@@ -22,13 +24,10 @@ func TestHTMLHeaders(t *testing.T) {
 	handler.ServeHTTP(responseRecorder, request)
 
 	contentType := responseRecorder.Result().Header.Get("Content-Type")
-	if contentType == "application/json" {
-		t.Error("Content-Type should not be application/json yet")
-	}
+	assert.NotEqual(t, "application/json", contentType)
 
-	// Decorate the handler
-	handlerFunc = decorators.HTMLHeaders(handlerFunc)
-	handler = http.HandlerFunc(handlerFunc)
+	// Weap the handler
+	handler = middleware.JSONHeaders(handler)
 
 	// Test the decorated handler
 	request, _ = http.NewRequest("GET", "/", nil)
@@ -36,7 +35,5 @@ func TestHTMLHeaders(t *testing.T) {
 	handler.ServeHTTP(responseRecorder, request)
 
 	contentType = responseRecorder.Result().Header.Get("Content-Type")
-	if contentType != "text/html; charset=utf-8" {
-		t.Error("Content-Type should be application/json: ", contentType)
-	}
+	assert.Equal(t, "application/json", contentType)
 }
