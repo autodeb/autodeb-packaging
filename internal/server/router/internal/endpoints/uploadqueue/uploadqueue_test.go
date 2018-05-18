@@ -1,6 +1,8 @@
-package app_test
+package uploadqueue_test
 
 import (
+	"encoding/json"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -8,26 +10,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"salsa.debian.org/autodeb-team/autodeb/internal/errorchecks"
-	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
-	"salsa.debian.org/autodeb-team/autodeb/internal/server/app/apptest"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/models"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/router/internal/endpoints/api"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/router/routertest"
 )
 
 func TestProcessFileUpload(t *testing.T) {
-	testApp, fs, db := apptest.SetupTest(t)
+	testRouter := routertest.SetupTest(t)
+	testApp := testRouter.App
+	fs := testRouter.DataFS
+	db := testRouter.DB
 
 	_, err := fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1"))
 	require.Error(t, err, "the file directory should not exist")
 
-	upload, err := testApp.ProcessUpload(
-		&app.UploadParameters{
-			Filename: "test.dsc",
-		},
+	request, _ := http.NewRequest(
+		http.MethodPut,
+		"/upload/test.dsc",
 		strings.NewReader("this is a test file\n"),
 	)
-	assert.NoError(t, err)
-	assert.Nil(t, upload)
+
+	response := testRouter.ServeHTTP(request)
+	assert.Equal(t, http.StatusCreated, response.Result().StatusCode)
+	assert.Equal(t, "", response.Body.String())
 
 	_, err = fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1"))
 	assert.NoError(t, err)
@@ -50,6 +55,23 @@ func TestProcessFileUpload(t *testing.T) {
 	assert.Equal(t, "test.dsc", fileUpload.Filename)
 	assert.Equal(t, expectedSHASum, fileUpload.SHA256Sum)
 	assert.Equal(t, false, fileUpload.Completed)
+}
+
+func TestUploadDebRejected(t *testing.T) {
+	testRouter := routertest.SetupTest(t)
+
+	request, _ := http.NewRequest(
+		http.MethodPut,
+		"/upload/test.deb",
+		strings.NewReader("this is a deb\n"),
+	)
+
+	response := testRouter.ServeHTTP(request)
+	assert.Equal(t, http.StatusBadRequest, response.Result().StatusCode)
+
+	apiErr, err := api.ErrorFromJSON(response.Body.Bytes())
+	assert.NoError(t, err)
+	assert.Equal(t, "only source uploads are accepted", apiErr.Message)
 }
 
 const dummyChangesFile = `Format: 1.8
@@ -78,53 +100,66 @@ Files:
 `
 
 func TestProcessChangesBadFormatRejected(t *testing.T) {
-	testApp, _, _ := apptest.SetupTest(t)
+	testRouter := routertest.SetupTest(t)
 
-	upload, err := testApp.ProcessUpload(
-		&app.UploadParameters{
-			Filename: "test.changes",
-		},
+	request, _ := http.NewRequest(
+		http.MethodPut,
+		"/upload/test.changes",
 		strings.NewReader("test"),
 	)
-	assert.Error(t, err)
-	assert.True(t, errorchecks.IsInputError(err))
-	assert.Nil(t, upload)
+
+	response := testRouter.ServeHTTP(request)
+	assert.Equal(t, http.StatusBadRequest, response.Result().StatusCode)
+
+	_, err := api.ErrorFromJSON(response.Body.Bytes())
+	assert.NoError(t, err)
 }
 
 func TestProcessChangesMissingFile(t *testing.T) {
-	testApp, _, _ := apptest.SetupTest(t)
+	testRouter := routertest.SetupTest(t)
 
-	upload, err := testApp.ProcessUpload(
-		&app.UploadParameters{
-			Filename: "test.changes",
-		},
+	request, _ := http.NewRequest(
+		http.MethodPut,
+		"/upload/test.changes",
 		strings.NewReader(dummyChangesFile),
 	)
-	assert.Error(t, err)
-	assert.True(t, errorchecks.IsInputError(err))
-	assert.Nil(t, upload)
+
+	response := testRouter.ServeHTTP(request)
+	assert.Equal(t, http.StatusBadRequest, response.Result().StatusCode)
+
+	apiErr, err := api.ErrorFromJSON(response.Body.Bytes())
+	assert.NoError(t, err)
+	assert.Contains(t, apiErr.Message, "changes refers to unexisting file test.dsc")
 }
 
 func TestProcessChanges(t *testing.T) {
-	testApp, fs, db := apptest.SetupTest(t)
+	testRouter := routertest.SetupTest(t)
+	testApp := testRouter.App
+	fs := testRouter.DataFS
+	db := testRouter.DB
 
-	upload, err := testApp.ProcessUpload(
-		&app.UploadParameters{
-			Filename: "test.dsc",
-		},
+	request, _ := http.NewRequest(
+		http.MethodPut,
+		"/upload/test.dsc",
 		strings.NewReader("this is a test file\n"),
 	)
-	assert.NoError(t, err)
-	assert.Nil(t, upload)
 
-	upload, err = testApp.ProcessUpload(
-		&app.UploadParameters{
-			Filename: "test.changes",
-		},
+	response := testRouter.ServeHTTP(request)
+	assert.Equal(t, http.StatusCreated, response.Result().StatusCode)
+	assert.Equal(t, "", response.Body.String())
+
+	request, _ = http.NewRequest(
+		http.MethodPut,
+		"/upload/test.changes",
 		strings.NewReader(dummyChangesFile),
 	)
-	assert.NoError(t, err)
-	assert.NotNil(t, upload)
+
+	response = testRouter.ServeHTTP(request)
+	assert.Equal(t, http.StatusCreated, response.Result().StatusCode)
+	assert.Equal(t, "application/json", response.Result().Header.Get("Content-Type"))
+
+	var upload models.Upload
+	json.Unmarshal(response.Body.Bytes(), &upload)
 
 	assert.Equal(t, uint(1), upload.ID)
 	assert.Equal(t, "autodeb", upload.Source)
@@ -132,7 +167,7 @@ func TestProcessChanges(t *testing.T) {
 	assert.Equal(t, "Alexandre Viau <aviau@debian.org>", upload.Maintainer)
 	assert.Equal(t, "Changed By <changed.by@debian.org>", upload.ChangedBy)
 
-	_, err = fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1"))
+	_, err := fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1"))
 	assert.Error(t, err, "the uploaded files directory should be removed")
 
 	_, err = fs.Stat(filepath.Join(testApp.UploadsDirectory(), "1"))

@@ -4,12 +4,17 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
 	"io"
+	"net/url"
+
+	"github.com/gorilla/sessions"
 
 	"salsa.debian.org/autodeb-team/autodeb/internal/filesystem"
 	"salsa.debian.org/autodeb-team/autodeb/internal/htmltemplate"
 	"salsa.debian.org/autodeb-team/autodeb/internal/http"
 	"salsa.debian.org/autodeb-team/autodeb/internal/log"
+	"salsa.debian.org/autodeb-team/autodeb/internal/oauth"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/database"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/router"
@@ -33,7 +38,7 @@ func New(cfg *Config, loggingOutput io.Writer) (*Server, error) {
 		return nil, err
 	}
 
-	app, err := app.NewApp(db, dataFS)
+	oauthProvider, err := getOAuthProvider(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -50,14 +55,29 @@ func New(cfg *Config, loggingOutput io.Writer) (*Server, error) {
 		return nil, err
 	}
 
-	router := router.NewRouter(
-		renderer,
-		filesystem.NewHTTPFS(staticFilesFS),
-		app,
-	)
+	sessionsStore, err := getSessionStore()
+	if err != nil {
+		return nil, err
+	}
 
 	logger := log.New(loggingOutput)
 	logger.SetLevel(cfg.LogLevel)
+
+	app, err := app.NewApp(
+		cfg.AppConfig,
+		db,
+		dataFS,
+		oauthProvider,
+		renderer,
+		filesystem.NewHTTPFS(staticFilesFS),
+		sessionsStore,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	router := router.NewRouter(app)
 
 	httpServer, err := http.NewHTTPServer(cfg.HTTP.Address, router, logger)
 	if err != nil {
@@ -69,6 +89,39 @@ func New(cfg *Config, loggingOutput io.Writer) (*Server, error) {
 	}
 
 	return &server, nil
+}
+
+func getSessionStore() (sessions.Store, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Ask for the session secret in the CLI
+	// instead of generating a random one
+	store := sessions.NewCookieStore(b)
+
+	return store, nil
+}
+
+func getOAuthProvider(cfg *Config) (oauth.Provider, error) {
+	baseURL, err := url.Parse(cfg.OAuth.BaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	provider, err := oauth.NewProvider(
+		cfg.OAuth.Provider,
+		baseURL,
+		cfg.OAuth.ClientID,
+		cfg.OAuth.ClientSecret,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return provider, nil
 }
 
 // Shutdown will gracefully stop the server
