@@ -1,5 +1,8 @@
 // Package cli is responsible for parsing command line arguments and creating
 // a server config.
+//
+// It isn't this package's responsibility to ensure that the configuration is
+// valid.
 package cli
 
 import (
@@ -7,14 +10,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 
 	"salsa.debian.org/autodeb-team/autodeb/internal/log"
-	"salsa.debian.org/autodeb-team/autodeb/internal/server"
-	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/config"
 )
 
 // Parse reads arguments and creates an autodeb server config
-func Parse(args []string, writerOutput io.Writer) (*server.Config, error) {
+func Parse(args []string, writerOutput io.Writer) (*config.Config, error) {
 
 	fs := flag.NewFlagSet("autodeb-server", flag.ContinueOnError)
 	fs.SetOutput(ioutil.Discard)
@@ -59,8 +62,11 @@ func Parse(args []string, writerOutput io.Writer) (*server.Config, error) {
 	var oauthClientSecret string
 	fs.StringVar(&oauthClientSecret, "oauth-client-secret", "", "oauth client secret")
 
-	var serverURL string
-	fs.StringVar(&serverURL, "server-url", "http://localhost:8071", "public server url")
+	var serverURLString string
+	fs.StringVar(&serverURLString, "server-url", "http://localhost:8071", "public server url")
+
+	var authentificationBackend string
+	fs.StringVar(&authentificationBackend, "authentification-backend", "disabled", "selected authentification backend")
 
 	if err := fs.Parse(args); err != nil {
 		return nil, err
@@ -78,6 +84,11 @@ func Parse(args []string, writerOutput io.Writer) (*server.Config, error) {
 		return nil, nil
 	}
 
+	serverURL, err := url.Parse(serverURLString)
+	if err != nil {
+		return nil, fmt.Errorf("invalid server url %s", serverURLString)
+	}
+
 	var logLevel log.Level
 	switch logLevelString {
 	case "info":
@@ -90,23 +101,24 @@ func Parse(args []string, writerOutput io.Writer) (*server.Config, error) {
 		return nil, fmt.Errorf("unrecognized log level: %s", logLevelString)
 	}
 
-	cfg := &server.Config{
-		HTTP: &server.HTTPServerConfig{
-			Address: address,
-		},
-		DB: &server.DBConfig{
+	cfg := &config.Config{
+		DB: &config.DBConfig{
 			Driver:           databaseDriver,
 			ConnectionString: databaseConnectionString,
 		},
-		OAuth: &server.OAuthConfig{
-			Provider:     oauthProvider,
-			BaseURL:      oauthBaseURL,
-			ClientID:     oauthClientID,
-			ClientSecret: oauthClientSecret,
+		HTTP: &config.HTTPServerConfig{
+			Address: address,
 		},
-		AppConfig: &app.Config{
-			ServerURL: serverURL,
+		Auth: &config.AuthConfig{
+			AuthentificationBackend: authentificationBackend,
+			OAuth: &config.OAuthConfig{
+				Provider:     oauthProvider,
+				BaseURL:      oauthBaseURL,
+				ClientID:     oauthClientID,
+				ClientSecret: oauthClientSecret,
+			},
 		},
+		ServerURL:             serverURL,
 		DataDirectory:         dataDirectory,
 		TemplatesDirectory:    templatesDirectory,
 		StaticFilesDirectory:  staticFilesDirectory,

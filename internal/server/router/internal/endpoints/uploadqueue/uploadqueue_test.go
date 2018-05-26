@@ -17,11 +17,11 @@ import (
 
 func TestProcessFileUpload(t *testing.T) {
 	testRouter := routertest.SetupTest(t)
-	testApp := testRouter.App
-	fs := testRouter.DataFS
+	testAppCtx := testRouter.AppCtx
+	fs := testAppCtx.UploadsService().FS()
 	db := testRouter.DB
 
-	_, err := fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1"))
+	_, err := fs.Stat(filepath.Join(testAppCtx.UploadsService().UploadedFilesDirectory(), "1"))
 	require.Error(t, err, "the file directory should not exist")
 
 	request, _ := http.NewRequest(
@@ -34,10 +34,10 @@ func TestProcessFileUpload(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, response.Result().StatusCode)
 	assert.Equal(t, "", response.Body.String())
 
-	_, err = fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1"))
+	_, err = fs.Stat(filepath.Join(testAppCtx.UploadsService().UploadedFilesDirectory(), "1"))
 	assert.NoError(t, err)
 
-	_, err = fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1", "test.dsc"))
+	_, err = fs.Stat(filepath.Join(testAppCtx.UploadsService().UploadedFilesDirectory(), "1", "test.dsc"))
 	assert.NoError(t, err)
 
 	expectedSHASum := "b6668cf8c46c7075e18215d922e7812ca082fa6cc34668d00a6c20aee4551fb6"
@@ -74,7 +74,10 @@ func TestUploadDebRejected(t *testing.T) {
 	assert.Equal(t, "only source uploads are accepted", apiErr.Message)
 }
 
-const dummyChangesFile = `Format: 1.8
+const dummyChangesFile = `-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Format: 1.8
 Date: Wed, 04 Apr 2018 14:28:29 -0400
 Source: autodeb
 Binary: autodeb-server autodeb-worker
@@ -97,6 +100,17 @@ Checksums-Sha256:
  b6668cf8c46c7075e18215d922e7812ca082fa6cc34668d00a6c20aee4551fb6 20 test.dsc
 Files:
  66ad00916013ea0f7a6550f762b1de1d 20 utils optional test.dsc
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCgAdFiEEi18odTLPQt8c9/fq0x67v8LkDPMFAlsHDq4ACgkQ0x67v8Lk
+DPPunQf/fTGl2oB0idOmbt//Xem/Gbn/OX7IAHgxBpqe4p/j/zALUr5uSxj7wkS0
+MsbUEgwerzLkceT9yp5ous1T0hiqd1FLy9YvIBGilxPAXm5iNICCHbdC8xX0zrm8
+yXHG700/5Z6RsQU0YhokktvUhgxcdRqg9ujII6OgoEVqiYt9a0UynpaGTrCSfd5Z
+MQ1vG5UTx5P1H/O107bTRZIHeRdXy45xytyZvLQRkbLw1A7/iWNiP2sySYYFNQRu
+/ynKZTDDvPTEBWnAUyCNOu9hCvXhAhSHPDp6fqx1Qvp6jg78sqSAiWKitLBfWW5k
+pUA+9T5iTl+RDUR356uU4G+n8mWQ+w==
+=8onE
+-----END PGP SIGNATURE-----
 `
 
 func TestProcessChangesBadFormatRejected(t *testing.T) {
@@ -118,6 +132,9 @@ func TestProcessChangesBadFormatRejected(t *testing.T) {
 func TestProcessChangesMissingFile(t *testing.T) {
 	testRouter := routertest.SetupTest(t)
 
+	user := testRouter.GetOrCreateTestUser()
+	testRouter.AddPGPKeyToUser(user)
+
 	request, _ := http.NewRequest(
 		http.MethodPut,
 		"/upload/test.changes",
@@ -132,11 +149,31 @@ func TestProcessChangesMissingFile(t *testing.T) {
 	assert.Contains(t, apiErr.Message, "changes refers to unexisting file test.dsc")
 }
 
+func TestProcessChangesUnsigned(t *testing.T) {
+	testRouter := routertest.SetupTest(t)
+
+	request, _ := http.NewRequest(
+		http.MethodPut,
+		"/upload/test.changes",
+		strings.NewReader("unsigned stuff"),
+	)
+
+	response := testRouter.ServeHTTP(request)
+	assert.Equal(t, http.StatusBadRequest, response.Result().StatusCode)
+
+	apiErr, err := api.ErrorFromJSON(response.Body.Bytes())
+	assert.NoError(t, err)
+	assert.Contains(t, apiErr.Message, "could not identify the signer")
+}
+
 func TestProcessChanges(t *testing.T) {
 	testRouter := routertest.SetupTest(t)
-	testApp := testRouter.App
-	fs := testRouter.DataFS
+	testAppCtx := testRouter.AppCtx
+	fs := testAppCtx.UploadsService().FS()
 	db := testRouter.DB
+
+	user := testRouter.GetOrCreateTestUser()
+	testRouter.AddPGPKeyToUser(user)
 
 	request, _ := http.NewRequest(
 		http.MethodPut,
@@ -167,16 +204,16 @@ func TestProcessChanges(t *testing.T) {
 	assert.Equal(t, "Alexandre Viau <aviau@debian.org>", upload.Maintainer)
 	assert.Equal(t, "Changed By <changed.by@debian.org>", upload.ChangedBy)
 
-	_, err := fs.Stat(filepath.Join(testApp.UploadedFilesDirectory(), "1"))
+	_, err := fs.Stat(filepath.Join(testAppCtx.UploadsService().UploadedFilesDirectory(), "1"))
 	assert.Error(t, err, "the uploaded files directory should be removed")
 
-	_, err = fs.Stat(filepath.Join(testApp.UploadsDirectory(), "1"))
+	_, err = fs.Stat(filepath.Join(testAppCtx.UploadsService().UploadsDirectory(), "1"))
 	assert.NoError(t, err)
 
-	_, err = fs.Stat(filepath.Join(testApp.UploadsDirectory(), "1", "test.changes"))
+	_, err = fs.Stat(filepath.Join(testAppCtx.UploadsService().UploadsDirectory(), "1", "test.changes"))
 	assert.NoError(t, err)
 
-	_, err = fs.Stat(filepath.Join(testApp.UploadsDirectory(), "1", "test.dsc"))
+	_, err = fs.Stat(filepath.Join(testAppCtx.UploadsService().UploadsDirectory(), "1", "test.dsc"))
 	assert.NoError(t, err)
 
 	fileUpload, err := db.GetFileUpload(uint(1))
