@@ -22,6 +22,7 @@ ExecStart=/usr/bin/autodeb-server \
                     -oauth-client-id=${OAUTH_CLIENT_ID} \
                     -oauth-client-secret=${OAUTH_CLIENT_SECRET} \
                     -server-url=${SERVER_URL} \
+                    -authentification-backend=${AUTHENTIFICATION_BACKEND} \
                     ${AUTODEB_SERVER_OPTS}
 Restart=on-failure
 
