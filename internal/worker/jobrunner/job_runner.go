@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"salsa.debian.org/autodeb-team/autodeb/internal/apiclient"
+	"salsa.debian.org/autodeb-team/autodeb/internal/errors"
 	"salsa.debian.org/autodeb-team/autodeb/internal/log"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/models"
 )
@@ -81,7 +82,13 @@ func (jobRunner *JobRunner) setupAndExecJob(job *models.Job) {
 	ctx, cancelCtx := jobRunner.getJobContext()
 	defer cancelCtx()
 
+	// Execute the job
 	jobError := jobRunner.execJob(ctx, job, workingDirectory, logFile)
+
+	// Include the job error at the end of the log
+	if jobError != nil {
+		fmt.Fprintf(logFile, "\nError: %+v", jobError)
+	}
 
 	// If we canceled the job, requeue
 	select {
@@ -122,7 +129,7 @@ func (jobRunner *JobRunner) execJob(ctx context.Context, job *models.Job, workin
 		return jobRunner.execBuild(ctx, job, workingDirectory, logFile)
 	default:
 		jobRunner.logger.Errorf("Unknown job type: %s", job.Type)
-		return fmt.Errorf("unknown job type: %s", job.Type)
+		return errors.Errorf("unknown job type: %s", job.Type)
 	}
 }
 

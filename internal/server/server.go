@@ -8,16 +8,22 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/gorilla/sessions"
+	gorillaSessions "github.com/gorilla/sessions"
 
+	"salsa.debian.org/autodeb-team/autodeb/internal/errors"
 	"salsa.debian.org/autodeb-team/autodeb/internal/filesystem"
 	"salsa.debian.org/autodeb-team/autodeb/internal/htmltemplate"
 	"salsa.debian.org/autodeb-team/autodeb/internal/http"
+	"salsa.debian.org/autodeb-team/autodeb/internal/http/sessions"
 	"salsa.debian.org/autodeb-team/autodeb/internal/log"
-	"salsa.debian.org/autodeb-team/autodeb/internal/oauth"
-	"salsa.debian.org/autodeb-team/autodeb/internal/server/app"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/appctx"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/auth"
+	authDisabled "salsa.debian.org/autodeb-team/autodeb/internal/server/auth/disabled"
+	authOAuth "salsa.debian.org/autodeb-team/autodeb/internal/server/auth/oauth"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/config"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/database"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/router"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/services"
 )
 
 // Server is the main server. It has dput-compatible interface
@@ -27,35 +33,24 @@ type Server struct {
 }
 
 // New creates a Server
-func New(cfg *Config, loggingOutput io.Writer) (*Server, error) {
+func New(cfg *config.Config, loggingOutput io.Writer) (*Server, error) {
 	db, err := database.NewDatabase(cfg.DB.Driver, cfg.DB.ConnectionString)
 	if err != nil {
 		return nil, err
 	}
 
-	dataFS, err := filesystem.NewFS(cfg.DataDirectory)
-	if err != nil {
-		return nil, err
-	}
-
-	oauthProvider, err := getOAuthProvider(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	templatesFS, err := filesystem.NewFS(cfg.TemplatesDirectory)
-	if err != nil {
-		return nil, err
-	}
+	dataFS := filesystem.NewBasePathFS(filesystem.NewOsFS(), cfg.DataDirectory)
+	staticFilesFS := filesystem.NewBasePathFS(filesystem.NewOsFS(), cfg.StaticFilesDirectory)
+	templatesFS := filesystem.NewBasePathFS(filesystem.NewOsFS(), cfg.TemplatesDirectory)
 
 	renderer := htmltemplate.NewRenderer(templatesFS, cfg.TemplatesCacheEnabled)
 
-	staticFilesFS, err := filesystem.NewFS(cfg.StaticFilesDirectory)
+	sessionsManager, err := getSessionManager()
 	if err != nil {
 		return nil, err
 	}
 
-	sessionsStore, err := getSessionStore()
+	authBackend, err := getAuthBackend(cfg, db, sessionsManager)
 	if err != nil {
 		return nil, err
 	}
@@ -63,21 +58,22 @@ func New(cfg *Config, loggingOutput io.Writer) (*Server, error) {
 	logger := log.New(loggingOutput)
 	logger.SetLevel(cfg.LogLevel)
 
-	app, err := app.NewApp(
-		cfg.AppConfig,
-		db,
-		dataFS,
-		oauthProvider,
-		renderer,
-		filesystem.NewHTTPFS(staticFilesFS),
-		sessionsStore,
-		logger,
-	)
+	services, err := services.New(db, dataFS, cfg.ServerURL)
 	if err != nil {
 		return nil, err
 	}
 
-	router := router.NewRouter(app)
+	appCtx := appctx.New(
+		cfg,
+		renderer,
+		filesystem.NewHTTPFS(staticFilesFS),
+		authBackend,
+		sessionsManager,
+		services,
+		logger,
+	)
+
+	router := router.NewRouter(appCtx)
 
 	httpServer, err := http.NewHTTPServer(cfg.HTTP.Address, router, logger)
 	if err != nil {
@@ -91,37 +87,57 @@ func New(cfg *Config, loggingOutput io.Writer) (*Server, error) {
 	return &server, nil
 }
 
-func getSessionStore() (sessions.Store, error) {
+func getAuthBackend(cfg *config.Config, db *database.Database, sessionsManager *sessions.Manager) (auth.Backend, error) {
+	switch cfg.Auth.AuthentificationBackend {
+	case "oauth":
+		return getOAuthBackend(cfg, db, sessionsManager)
+	case "disabled":
+		return authDisabled.NewBackend(), nil
+	default:
+		return nil, errors.Errorf("unrecognized authentification backend: %s (use oauth or disabled)", cfg.Auth.AuthentificationBackend)
+	}
+}
+
+func getOAuthBackend(cfg *config.Config, db *database.Database, sessionsManager *sessions.Manager) (auth.Backend, error) {
+	baseURL, err := url.Parse(cfg.Auth.OAuth.BaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	oauthProvider, err := authOAuth.NewProvider(
+		cfg.Auth.OAuth.Provider,
+		baseURL,
+		cfg.Auth.OAuth.ClientID,
+		cfg.Auth.OAuth.ClientSecret,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	authBackend := authOAuth.NewBackend(
+		db,
+		sessionsManager,
+		oauthProvider,
+		cfg.ServerURL,
+	)
+
+	return authBackend, nil
+}
+
+func getSessionManager() (*sessions.Manager, error) {
+	// TODO: Ask for the session secret in the CLI
+	// instead of generating a random one
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Ask for the session secret in the CLI
-	// instead of generating a random one
-	store := sessions.NewCookieStore(b)
+	sessionStore := gorillaSessions.NewCookieStore(b)
 
-	return store, nil
-}
+	sessionsManager := sessions.NewManager(sessionStore, "autodeb")
 
-func getOAuthProvider(cfg *Config) (oauth.Provider, error) {
-	baseURL, err := url.Parse(cfg.OAuth.BaseURL)
-	if err != nil {
-		return nil, err
-	}
-
-	provider, err := oauth.NewProvider(
-		cfg.OAuth.Provider,
-		baseURL,
-		cfg.OAuth.ClientID,
-		cfg.OAuth.ClientSecret,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return provider, nil
+	return sessionsManager, nil
 }
 
 // Shutdown will gracefully stop the server

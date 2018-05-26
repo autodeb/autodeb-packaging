@@ -2,36 +2,90 @@
 <html>
     <head>
         <title>{{ block "title" . }}{{ end }}</title>
+        <!-- Bootstrap -->
+        <link rel="stylesheet" type="text/css" href="/static/vendor/bootstrap/bootstrap.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- Custom CSS -->
         <link rel="stylesheet" type="text/css" href="/static/style.css">
     </head>
     <body>
+        <div class="container">
 
-        <header class="main-header">
-            <h1>autodeb</h1>
-        </header>
 
-        <aside class="primary-sidebar">
+            <!-- Row1: HEADER -->
+            <div class="row">
+                <div class="col pl-5 pt-3">
+                    <a href="/">
+                        <img class="float-left" src="/static/vendor/debian/openlogo-nd.svg" alt="Autodeb" title="Visit the main page">
+                    </a>
+                    <div class="h-100 d-flex justify-content-center align-items-center ">
+                        <h1>autodeb</h1>
+                    </div>
+                </div>
+            </div>
 
-            <p>Main</p>
-            <a href="/">Home</a><br>
-            <a href="/uploads">Uploads</a><br>
-            <a href="/jobs">Jobs</a>
+            <!-- Row2: [ SIDEBAR | CONTENT ] -->
+            <div class="row">
 
-            <p>Account</p>
-            {{ if .User }}
-                <a href="/profile">Profile ({{ .User.Username }})</a><br>
-                <a href="/auth/logout">logout</a><br>
-            {{ else }}
-                <a href="/auth/login">Login</a><br>
-            {{ end }}
-        </aside>
+                <!-- SIDEBAR -->
+                <div class="col-md-2 pt-5">
+                    <aside>
+                        <div class="card my-3">
+                            <div class="card-header">
+                                <strong>Main</strong>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                <a class="list-group-item" href="/">Home</a>
+                                <a class="list-group-item" href="/uploads">Uploads</a>
+                                <a class="list-group-item" href="/jobs">Jobs</a>
+                            </ul>
+                        </div>
+                        <div class="card my-3">
+                            <div class="card-header">
+                                <strong>Account</strong>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                {{ if .User }}
+                                    <a class="list-group-item" href="/profile">Profile ({{ .User.Username }})</a>
+                                    <a class="list-group-item" href="/logout">logout</a>
+                                {{ else }}
+                                    <a class="list-group-item" href="/login">Login</a>
+                                {{ end }}
+                            </ul>
+                    </aside>
+                </div>
 
-        <main class="content">
-            {{ template "content" . }}
-        </main>
+                <!-- CONTENT -->
+                <div class="col-md-10">
+                    <main>
+                        {{/* FLASHES */}}
+                        {{ range $category, $messages := $.Flashes }}
+                            {{ range $_, $message := $messages }}
+                                <div class="alert alert-{{ $category }}">{{ $message }}</div>
+                            {{ end }}
+                        {{ end }}
 
-        <footer class="main-footer">
-        </footer>
+                        {{ template "content" . }}
+                    </main>
+                </div>
+
+            </div>
+
+            <!-- Row3: Footer -->
+            <div class="row">
+                <div class="col text-center">
+                    <footer>
+                        <hr>
+                        Autodeb - Copyright 2018 Alexandre Viau<br>
+                        <a href="https://salsa.debian.org/autodeb-team">Source Code</a> -
+                        <a href="https://salsa.debian.org/groups/autodeb-team/-/issues">Bug Tracker</a> -
+                        <a href="https://salsa.debian.org/autodeb-team/autodeb#documentation">Documentation</a> -
+                        <a href="https://salsa.debian.org/autodeb-team/autodeb#getting-in-touch">Contact</a>
+                    </footer>
+                </div>
+            </div>
+
+    </div>
 
     </body>
 </html>
