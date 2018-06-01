@@ -39,12 +39,26 @@ func NewRouter(appCtx *appctx.Context) http.Handler {
 	// Web pages
 	router.Path("/").Handler(webpages.IndexGetHandler(appCtx)).Methods(http.MethodGet)
 	router.Path("/uploads").Handler(webpages.UploadsGetHandler(appCtx)).Methods(http.MethodGet)
+	router.Path("/uploads/{uploadID:[0-9]+}").Handler(webpages.UploadGetHandler(appCtx)).Methods(http.MethodGet)
 	router.Path("/jobs").Handler(webpages.JobsGetHandler(appCtx)).Methods(http.MethodGet)
+	router.Path("/jobs/{jobID:[0-9]+}").Handler(webpages.JobGetHandler(appCtx)).Methods(http.MethodGet)
+
+	// ==== Profile ====
 	router.Path("/profile").Handler(webpages.ProfileGetHandler(appCtx)).Methods(http.MethodGet)
+
+	router.Path("/profile/pgp-keys").Handler(webpages.ProfilePGPKeysGetHandler(appCtx)).Methods(http.MethodGet)
 	router.Path("/profile/add-pgp-key").Handler(webpages.AddPGPKeyPostHandler(appCtx)).Methods(http.MethodPost)
+	router.Path("/profile/remove-pgp-key").Handler(webpages.RemovePGPKeyPostHandler(appCtx)).Methods(http.MethodPost)
+
+	router.Path("/profile/access-tokens").Handler(webpages.ProfileAccessTokensGetHandler(appCtx)).Methods(http.MethodGet)
+	router.Path("/profile/create-access-token").Handler(webpages.CreateAccessTokenPostHandler(appCtx)).Methods(http.MethodPost)
+	router.Path("/profile/remove-access-token").Handler(webpages.RemoveAccessTokenPostHandler(appCtx)).Methods(http.MethodPost)
 
 	// REST API Router
 	restAPIRouter := router.PathPrefix("/api/").Subrouter()
+
+	// ==== User ====
+	restAPIRouter.Path("/user").Handler(api.UserGetHandler(appCtx)).Methods(http.MethodGet)
 
 	// ==== Jobs API ====
 	restAPIRouter.Path("/jobs/next").Handler(api.JobsNextPostHandler(appCtx)).Methods(http.MethodPost)
@@ -52,6 +66,9 @@ func NewRouter(appCtx *appctx.Context) http.Handler {
 	restAPIRouter.Path("/jobs/{jobID:[0-9]+}/status/{jobStatus:[0-9]+}").Handler(api.JobStatusPostHandler(appCtx)).Methods(http.MethodPost)
 	restAPIRouter.Path("/jobs/{jobID:[0-9]+}/log").Handler(api.JobLogPostHandler(appCtx)).Methods(http.MethodPost)
 	restAPIRouter.Path("/jobs/{jobID:[0-9]+}/log.txt").Handler(api.JobLogTxtGetHandler(appCtx)).Methods(http.MethodGet)
+	restAPIRouter.Path("/jobs/{jobID:[0-9]+}/artifacts").Handler(api.JobArtifactsGetHandler(appCtx)).Methods(http.MethodGet)
+	restAPIRouter.Path("/jobs/{jobID:[0-9]+}/artifacts/{filename}").Handler(api.JobArtifactPostHandler(appCtx)).Methods(http.MethodPost)
+	restAPIRouter.Path("/jobs/{jobID:[0-9]+}/artifacts/{filename}").Handler(api.JobArtifactGetHandler(appCtx)).Methods(http.MethodGet)
 
 	// ==== Uploads API ====
 	restAPIRouter.Path("/uploads/{uploadID:[0-9]+}/dsc").Handler(api.UploadDSCGetHandler(appCtx)).Methods(http.MethodGet)
