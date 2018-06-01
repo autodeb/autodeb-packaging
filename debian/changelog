@@ -1,6 +1,7 @@
 autodeb (0.8.0-1) UNRELEASED; urgency=medium
 
   * New upstream version.
+  * autodeb-worker: set a default access-token.
 
  -- Alexandre Viau <aviau@debian.org>  Fri, 01 Jun 2018 15:57:33 -0400
 

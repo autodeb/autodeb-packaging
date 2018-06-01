@@ -13,6 +13,7 @@ ExecStart=/usr/bin/autodeb-worker \
                         -working-directory=${WORKING_DIRECTORY} \
                         -log-level=${LOG_LEVEL} \
                         -runner-count=${RUNNER_COUNT} \
+                        -access-token=${ACCESS_TOKEN} \
                         ${AUTODEB_WORKER_OPTS}
 Restart=on-failure
 
