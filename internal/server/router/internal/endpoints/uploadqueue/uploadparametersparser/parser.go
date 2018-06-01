@@ -24,10 +24,8 @@ func Parse(r *http.Request) (*uploads.UploadParameters, error) {
 		return nil, err
 	}
 
-	// Create the UploadParameters with default values
 	uploadParameters := uploads.UploadParameters{
-		Filename:    filename,
-		Autopkgtest: true,
+		Filename: filename,
 	}
 
 	// Get parameters from method #2
@@ -47,12 +45,6 @@ func Parse(r *http.Request) (*uploads.UploadParameters, error) {
 				uploadParameters.ForwardUpload = forwardUpload
 			} else {
 				return nil, errors.Errorf("invalid value for forward_upload: %s", value[0])
-			}
-		case "autopkgtest":
-			if autopkgtest, err := strconv.ParseBool(value[0]); err == nil {
-				uploadParameters.Autopkgtest = autopkgtest
-			} else {
-				return nil, errors.Errorf("invalid value for autopkgtest: %s", value[0])
 			}
 		default:
 			return nil, errors.Errorf("unrecognized upload parameter: %s", param)
