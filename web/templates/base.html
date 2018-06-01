@@ -2,6 +2,8 @@
 <html>
     <head>
         <title>{{ block "title" . }}{{ end }}</title>
+        <!-- favicon -->
+        <link rel="icon" href="/static/vendor/debian/favicon.ico">
         <!-- Bootstrap -->
         <link rel="stylesheet" type="text/css" href="/static/vendor/bootstrap/bootstrap.css">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +11,7 @@
         <link rel="stylesheet" type="text/css" href="/static/style.css">
     </head>
     <body>
-        <div class="container">
+        <div class="container-fluid">
 
 
             <!-- Row1: HEADER -->
@@ -40,6 +42,16 @@
                                 <a class="list-group-item" href="/jobs">Jobs</a>
                             </ul>
                         </div>
+                        {{ if .User }}
+                        <div class="card my-3">
+                            <div class="card-header">
+                                <strong>Personnal pages</strong>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                <a class="list-group-item" href="/uploads?user_id={{ .User.ID }}">My Uploads</a>
+                            </ul>
+                        </div>
+                        {{ end }}
                         <div class="card my-3">
                             <div class="card-header">
                                 <strong>Account</strong>
@@ -47,7 +59,9 @@
                             <ul class="list-group list-group-flush">
                                 {{ if .User }}
                                     <a class="list-group-item" href="/profile">Profile ({{ .User.Username }})</a>
-                                    <a class="list-group-item" href="/logout">logout</a>
+                                    <a class="list-group-item" href="/profile/pgp-keys">PGP Keys<a>
+                                    <a class="list-group-item" href="/profile/access-tokens">Access Tokens<a>
+                                    <a class="list-group-item" href="/logout">Logout</a>
                                 {{ else }}
                                     <a class="list-group-item" href="/login">Login</a>
                                 {{ end }}

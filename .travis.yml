@@ -1,0 +1,19 @@
+language: go
+
+go_import_path: salsa.debian.org/autodeb-team/autodeb
+
+go:
+  - 1.10.x
+
+install:
+  - make get-deps
+  - go get -u github.com/golang/lint/golint
+
+script:
+  - make test-coverage
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+notifications:
+  email: false

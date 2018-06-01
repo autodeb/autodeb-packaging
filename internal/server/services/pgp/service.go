@@ -79,6 +79,13 @@ func (service *Service) AddUserPGPKey(userID uint, key, proof string) error {
 	// Get the fingerpring of the key
 	fingerprint := pgp.EntityFingerprint(entity)
 
+	// Ensure that it is not already registered
+	if keys, err := service.db.GetAllPGPKeysByFingerprint(fingerprint); err != nil {
+		return err
+	} else if len(keys) > 0 {
+		return errors.Errorf("key %s is already registered to user %d", fingerprint, keys[0].UserID)
+	}
+
 	// Add the key to the database
 	if _, err := service.db.CreatePGPKey(userID, fingerprint, key); err != nil {
 		return err
@@ -137,6 +144,11 @@ func (service *Service) keyRing() (openpgp.EntityList, error) {
 	}
 
 	return keyring, err
+}
+
+// RemovePGPKey removes the PGP Key with a matching userID and ID
+func (service *Service) RemovePGPKey(id uint, userID uint) error {
+	return service.db.RemovePGPKey(id, userID)
 }
 
 // GetUserPGPKeys returns all PGP Keys associated with a user

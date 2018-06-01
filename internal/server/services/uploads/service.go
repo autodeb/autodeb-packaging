@@ -9,22 +9,25 @@ import (
 	"salsa.debian.org/autodeb-team/autodeb/internal/filesystem"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/database"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/models"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/services/jobs"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/services/pgp"
 )
 
 //Service manages uploads
 type Service struct {
-	db         *database.Database
-	pgpService *pgp.Service
-	fs         filesystem.FS
+	db          *database.Database
+	pgpService  *pgp.Service
+	jobsService *jobs.Service
+	fs          filesystem.FS
 }
 
 //New creates a new upload service
-func New(db *database.Database, pgpService *pgp.Service, fs filesystem.FS) *Service {
+func New(db *database.Database, pgpService *pgp.Service, jobsService *jobs.Service, fs filesystem.FS) *Service {
 	service := &Service{
-		db:         db,
-		pgpService: pgpService,
-		fs:         fs,
+		db:          db,
+		pgpService:  pgpService,
+		jobsService: jobsService,
+		fs:          fs,
 	}
 	return service
 }
@@ -48,6 +51,16 @@ func (service *Service) UploadsDirectory() string {
 // GetAllUploads returns all uploads
 func (service *Service) GetAllUploads() ([]*models.Upload, error) {
 	return service.db.GetAllUploads()
+}
+
+// GetAllUploadsByUserID returns all uploads for a given user id
+func (service *Service) GetAllUploadsByUserID(userID uint) ([]*models.Upload, error) {
+	return service.db.GetAllUploadsByUserID(userID)
+}
+
+// GetUpload returns an upload by ID
+func (service *Service) GetUpload(uploadID uint) (*models.Upload, error) {
+	return service.db.GetUpload(uploadID)
 }
 
 //GetAllFileUploadsByUploadID returns all FileUploads associated to an upload

@@ -7,13 +7,18 @@ import (
 )
 
 // CreateUpload will create an upload
-func (db *Database) CreateUpload(userID uint, source, version, maintainer, changedBy string) (*models.Upload, error) {
+func (db *Database) CreateUpload(
+	userID uint,
+	source, version, maintainer, changedBy string,
+	autopkgtest bool,
+) (*models.Upload, error) {
 	upload := &models.Upload{
-		UserID:     userID,
-		Source:     source,
-		Version:    version,
-		Maintainer: maintainer,
-		ChangedBy:  changedBy,
+		UserID:      userID,
+		Source:      source,
+		Version:     version,
+		Maintainer:  maintainer,
+		ChangedBy:   changedBy,
+		Autopkgtest: autopkgtest,
 	}
 
 	if err := db.gormDB.Create(upload).Error; err != nil {
@@ -28,6 +33,25 @@ func (db *Database) GetAllUploads() ([]*models.Upload, error) {
 	var uploads []*models.Upload
 
 	if err := db.gormDB.Model(&models.Upload{}).Find(&uploads).Error; err != nil {
+		return nil, err
+	}
+
+	return uploads, nil
+}
+
+// GetAllUploadsByUserID returns all uploads for a user
+func (db *Database) GetAllUploadsByUserID(userID uint) ([]*models.Upload, error) {
+	var uploads []*models.Upload
+
+	query := db.gormDB.Model(
+		&models.Upload{},
+	).Where(
+		&models.Upload{
+			UserID: userID,
+		},
+	)
+
+	if err := query.Find(&uploads).Error; err != nil {
 		return nil, err
 	}
 
