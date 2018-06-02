@@ -3,27 +3,11 @@ Description=Autodeb Server
 After=network.target
 
 [Service]
-User=autodeb
-Group=autodeb
-WorkingDirectory=/var/lib/autodeb/server
+User=autodeb-server
+Group=autodeb-server
+WorkingDirectory=/var/lib/autodeb-server
 EnvironmentFile=/etc/default/autodeb-server
-EnvironmentFile=/etc/autodeb-server.conf
-ExecStart=/usr/bin/autodeb-server \
-                    -address=${ADDRESS} \
-                    -templates-directory=${TEMPLATES_DIRECTORY} \
-                    -cache-templates=${CACHE_TEMPLATES} \
-                    -static-files-directory=${STATIC_FILES_DIRECTORY} \
-                    -data-directory=${DATA_DIRECTORY} \
-                    -database-driver=${DATABASE_DRIVER} \
-                    -database-connection-string=${DATABASE_CONNECTION_STRING} \
-                    -log-level=${LOG_LEVEL} \
-                    -oauth-provider=${OAUTH_PROVIDER} \
-                    -oauth-base-url=${OAUTH_BASE_URL} \
-                    -oauth-client-id=${OAUTH_CLIENT_ID} \
-                    -oauth-client-secret=${OAUTH_CLIENT_SECRET} \
-                    -server-url=${SERVER_URL} \
-                    -authentification-backend=${AUTHENTIFICATION_BACKEND} \
-                    ${AUTODEB_SERVER_OPTS}
+ExecStart=/usr/bin/autodeb-server -config=${CONFIG}
 Restart=on-failure
 
 [Install]

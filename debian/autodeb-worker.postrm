@@ -21,12 +21,9 @@ set -e
 
 case "$1" in
     purge|remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
-      # Only remove /var/lib/autodeb/worker on purge
+      # Only remove /var/lib/autodeb-worker on purge
       if [ "${1}" = "purge" ] ; then
-          rm -rf /var/lib/autodeb/worker
-          if [ ! -d /var/lib/autodeb/server ]; then
-              rm -rf /var/lib/autodeb
-          fi
+          rm -rf /var/lib/autodeb-worker
       fi
     ;;
 

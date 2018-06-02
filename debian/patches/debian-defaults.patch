@@ -1,0 +1,34 @@
+Description: Set debian defaults to autodeb-*.conf
+Author: Alexandre Viau <aviau@debian.org>
+Last-Update: 2018-06-02
+
+--- a/etc/autodeb-server.conf
++++ b/etc/autodeb-server.conf
+@@ -10,13 +10,13 @@
+ 
+ # The directory in which autodeb is going to save uploads, job
+ # artifacts, etc.
+-#data_directory = "data"
++data_directory = "/var/lib/autodeb-server"
+ 
+ # The directory containing the web pages templates
+-#templates_directory = "web/templates"
++templates_directory = "/usr/share/autodeb-server/web/templates"
+ 
+ # The directory containing the web pages static files
+-#static_files_directory = "web/static"
++static_files_directory = "/usr/share/autodeb-server/web/static"
+ 
+ # Whether or not to cache templates in memory.
+ #templates_cache_enabled = true
+--- a/etc/autodeb-worker.conf
++++ b/etc/autodeb-worker.conf
+@@ -7,7 +7,7 @@
+ #server-url = "http://localhost:8071"
+ 
+ # This is where the worker will execute jobs
+-#working-directory = "jobs"
++working-directory = "/var/lib/autodeb-worker"
+ 
+ # API Access token for the autodeb master
+ #access-token = ""

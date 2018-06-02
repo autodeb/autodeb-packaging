@@ -3,18 +3,11 @@ Description=Autodeb Worker
 After=network.target
 
 [Service]
-User=autodeb
-Group=autodeb
-WorkingDirectory=/var/lib/autodeb/worker
+User=autodeb-worker
+Group=autodeb-worker
+WorkingDirectory=/var/lib/autodeb-worker
 EnvironmentFile=/etc/default/autodeb-worker
-EnvironmentFile=/etc/autodeb-worker.conf
-ExecStart=/usr/bin/autodeb-worker \
-                        -server-url=${SERVER_URL} \
-                        -working-directory=${WORKING_DIRECTORY} \
-                        -log-level=${LOG_LEVEL} \
-                        -runner-count=${RUNNER_COUNT} \
-                        -access-token=${ACCESS_TOKEN} \
-                        ${AUTODEB_WORKER_OPTS}
+ExecStart=/usr/bin/autodeb-worker -config=${CONFIG}
 Restart=on-failure
 
 [Install]
