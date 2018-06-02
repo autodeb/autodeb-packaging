@@ -24,11 +24,11 @@ Last-Update: 2018-06-02
 --- a/etc/autodeb-worker.conf
 +++ b/etc/autodeb-worker.conf
 @@ -7,7 +7,7 @@
- #server-url = "http://localhost:8071"
+ #server_url = "http://localhost:8071"
  
  # This is where the worker will execute jobs
--#working-directory = "jobs"
-+working-directory = "/var/lib/autodeb-worker"
+-#working_directory = "jobs"
++working_directory = "/var/lib/autodeb-worker"
  
  # API Access token for the autodeb master
- #access-token = ""
+ #access_token = ""
