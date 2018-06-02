@@ -1,10 +1,8 @@
-autodeb (0.9.1-1) UNRELEASED; urgency=medium
+autodeb (0.9.1-1) pages; urgency=medium
 
-  * New upstream version.
-  * autodeb-worker: set a default access-token.
-  * Adapt to new configuration files.
+  * Unofficial Debian package.
 
- -- Alexandre Viau <aviau@debian.org>  Fri, 01 Jun 2018 15:57:33 -0400
+ -- Alexandre Viau <aviau@debian.org>  Sat, 02 Jun 2018 15:18:31 -0400
 
 autodeb (0.7.0-1) unstable; urgency=medium
 
