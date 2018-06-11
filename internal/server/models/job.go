@@ -1,9 +1,5 @@
 package models
 
-import (
-	"fmt"
-)
-
 // JobType is the type of job
 type JobType int
 
@@ -11,16 +7,20 @@ type JobType int
 const (
 	JobTypeUnknown JobType = iota
 	JobTypeBuild
+	JobTypeAutopkgtest
+	JobTypeForward
 )
 
 func (jt JobType) String() string {
 	switch jt {
-	case JobTypeUnknown:
-		return "unknown"
 	case JobTypeBuild:
 		return "build"
+	case JobTypeAutopkgtest:
+		return "autopkgtest"
+	case JobTypeForward:
+		return "forward"
 	default:
-		panic(fmt.Sprintf("Unknown job type %d", jt))
+		return "unknown"
 	}
 }
 
@@ -38,8 +38,6 @@ const (
 
 func (js JobStatus) String() string {
 	switch js {
-	case JobStatusUnknown:
-		return "unknown"
 	case JobStatusQueued:
 		return "queued"
 	case JobStatusAssigned:
@@ -49,14 +47,21 @@ func (js JobStatus) String() string {
 	case JobStatusFailed:
 		return "failed"
 	default:
-		panic(fmt.Sprintf("Unknown job status %d", js))
+		return "unknown"
 	}
 }
 
 // Job is a builds a test, etc.
 type Job struct {
-	ID       uint      `json:"id"`
-	Type     JobType   `json:"type"`
-	Status   JobStatus `json:"status"`
-	UploadID uint      `json:"upload_id"`
+	ID     uint      `json:"id"`
+	Type   JobType   `json:"type"`
+	Status JobStatus `json:"status"`
+
+	// The upload that has triggered this job.
+	// The uploadID is also set to all child jobs.
+	UploadID uint `json:"upload_id"`
+
+	// Some job's artifacts serve as input to other jobs.
+	// For example: a build job's artifacts is an input to an autopkgtest job
+	InputArtifactID uint `json:"input_artifact_id"`
 }

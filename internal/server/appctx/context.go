@@ -7,9 +7,11 @@ import (
 	"salsa.debian.org/autodeb-team/autodeb/internal/htmltemplate"
 	"salsa.debian.org/autodeb-team/autodeb/internal/http/sessions"
 	"salsa.debian.org/autodeb-team/autodeb/internal/log"
+	httplog "salsa.debian.org/autodeb-team/autodeb/internal/log/http"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/auth"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/config"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/services"
+	"salsa.debian.org/autodeb-team/autodeb/internal/server/services/artifacts"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/services/jobs"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/services/pgp"
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/services/tokens"
@@ -61,6 +63,11 @@ func (ctx *Context) Logger() log.Logger {
 	return ctx.logger
 }
 
+// RequestLogger returns a request logger
+func (ctx *Context) RequestLogger() *httplog.RequestLogger {
+	return httplog.NewRequestLogger(ctx.Logger())
+}
+
 // AuthBackend returns the authentification service
 func (ctx *Context) AuthBackend() auth.Backend {
 	return ctx.authBackend
@@ -94,6 +101,11 @@ func (ctx *Context) JobsService() *jobs.Service {
 // TokensService returns the Tokens service
 func (ctx *Context) TokensService() *tokens.Service {
 	return ctx.services.Tokens()
+}
+
+// ArtifactsService returns the Artifacts service
+func (ctx *Context) ArtifactsService() *artifacts.Service {
+	return ctx.services.Artifacts()
 }
 
 // TemplatesRenderer returns the template renderer

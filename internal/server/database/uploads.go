@@ -7,13 +7,20 @@ import (
 )
 
 // CreateUpload will create an upload
-func (db *Database) CreateUpload(userID uint, source, version, maintainer, changedBy string) (*models.Upload, error) {
+func (db *Database) CreateUpload(
+	userID uint,
+	source, version, maintainer, changedBy string,
+	autopkgtest bool,
+	forward bool,
+) (*models.Upload, error) {
 	upload := &models.Upload{
-		UserID:     userID,
-		Source:     source,
-		Version:    version,
-		Maintainer: maintainer,
-		ChangedBy:  changedBy,
+		UserID:      userID,
+		Source:      source,
+		Version:     version,
+		Maintainer:  maintainer,
+		ChangedBy:   changedBy,
+		Autopkgtest: autopkgtest,
+		Forward:     forward,
 	}
 
 	if err := db.gormDB.Create(upload).Error; err != nil {
