@@ -1,3 +1,9 @@
+autodeb (0.10.0-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Alexandre Viau <aviau@debian.org>  Sun, 10 Jun 2018 21:33:53 -0400
+
 autodeb (0.9.1-1) unstable; urgency=medium
 
   * New upstream version.
