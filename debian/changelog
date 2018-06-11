@@ -1,8 +1,8 @@
-autodeb (0.10.1-1) unstable; urgency=medium
+autodeb (0.10.1-1) pages; urgency=medium
 
-  * New upstream version.
+  * Unofficial Debian package.
 
- -- Alexandre Viau <aviau@debian.org>  Sun, 10 Jun 2018 22:15:54 -0400
+ -- Alexandre Viau <aviau@debian.org>  Sun, 10 Jun 2018 22:16:31 -0400
 
 autodeb (0.10.0-1) unstable; urgency=medium
 
