@@ -22,6 +22,7 @@ import (
 type UploadParameters struct {
 	Filename      string
 	ForwardUpload bool
+	Autopkgtest   bool
 }
 
 type uploadError struct {
@@ -41,18 +42,18 @@ func (service *Service) ProcessUpload(uploadParameters *UploadParameters, conten
 
 	switch ext := filepath.Ext(uploadFileName); ext {
 	case ".changes":
-		upload, err := service.processChangesUpload(uploadFileName, content)
+		upload, err := service.processChangesUpload(uploadFileName, content, uploadParameters)
 		return upload, err
 	case ".deb":
 		return nil, &uploadError{errors.New("only source uploads are accepted"), true}
 	default:
-		err := service.processFileUpload(uploadFileName, content)
+		_, err := service.processFileUpload(uploadFileName, content)
 		return nil, err
 	}
 
 }
 
-func (service *Service) processChangesUpload(filename string, content io.Reader) (*models.Upload, error) {
+func (service *Service) processChangesUpload(filename string, content io.Reader, uploadParameters *UploadParameters) (*models.Upload, error) {
 	contentBytes, err := ioutil.ReadAll(content)
 	if err != nil {
 		return nil, err
@@ -87,6 +88,15 @@ func (service *Service) processChangesUpload(filename string, content io.Reader)
 		return nil, err
 	}
 
+	//Process the .changes file upload
+	fileUpload, err := service.processFileUpload(filename, bytes.NewReader(contentBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	// Append the .changes file to the file uploads
+	fileUploads = append(fileUploads, fileUpload)
+
 	//Create the upload
 	upload, err := service.db.CreateUpload(
 		signerID,
@@ -94,18 +104,10 @@ func (service *Service) processChangesUpload(filename string, content io.Reader)
 		changes.Version.String(),
 		changes.Maintainer,
 		changes.ChangedBy,
+		uploadParameters.Autopkgtest,
+		uploadParameters.ForwardUpload,
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	//Save the .changes file
-	if err := writeDataToDestInFS(
-		bytes.NewReader(contentBytes),
-		filepath.Join(service.UploadsDirectory(), fmt.Sprint(upload.ID)),
-		filename,
-		service.fs,
-	); err != nil {
 		return nil, err
 	}
 
@@ -141,14 +143,24 @@ func (service *Service) moveFileUpload(fileUpload *models.FileUpload, upload *mo
 		fileUpload.Filename,
 	)
 
-	dest := filepath.Join(
+	destFolder := filepath.Join(
 		service.UploadsDirectory(),
 		fmt.Sprint(upload.ID),
+	)
+
+	destFile := filepath.Join(
+		destFolder,
 		fileUpload.Filename,
 	)
 
-	if err := service.fs.Rename(source, dest); err != nil {
-		return errors.Errorf("could not move %s to %s", source, dest)
+	if _, err := service.fs.Stat(destFolder); os.IsNotExist(err) {
+		if err := service.fs.MkdirAll(destFolder, 0755); err != nil {
+			return errors.WithMessage(err, "could not create destination directory")
+		}
+	}
+
+	if err := service.fs.Rename(source, destFile); err != nil {
+		return errors.Errorf("could not move %s to %s", source, destFile)
 	}
 
 	fileUpload.Completed = true
@@ -193,23 +205,23 @@ func (service *Service) getChangesFileUploads(changes *control.Changes) ([]*mode
 	return fileUploads, nil
 }
 
-func (service *Service) processFileUpload(filename string, content io.Reader) error {
+func (service *Service) processFileUpload(filename string, content io.Reader) (*models.FileUpload, error) {
 	// Save the upload to a temp file on the os's filesystem so that we can
 	// calculate the shasum
 	tmpfileName, err := writeToTempfile(content)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer os.Remove(tmpfileName)
 
 	shasum, err := sha256.Sum256HexFile(tmpfileName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fileUpload, err := service.db.CreateFileUpload(filename, shasum, time.Now())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	destDir := filepath.Join(service.UploadedFilesDirectory(), fmt.Sprint(fileUpload.ID))
@@ -217,17 +229,19 @@ func (service *Service) processFileUpload(filename string, content io.Reader) er
 	// Open the temporary file
 	tmpFile, err := os.Open(tmpfileName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tmpFile.Close()
 
 	// Write the upload in the fileStorage
-	err = writeDataToDestInFS(
+	if err := writeDataToDestInFS(
 		tmpFile,
 		destDir,
 		filename,
 		service.fs,
-	)
+	); err != nil {
+		return nil, err
+	}
 
-	return err
+	return fileUpload, err
 }

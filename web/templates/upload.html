@@ -1,4 +1,4 @@
-{{ define "title" }}Uploads{{ end }}
+{{ define "title" }}Upload #{{ $.Data.Upload.ID }}{{ end }}
 
 {{ define "content" }}
 
@@ -30,6 +30,12 @@
         <th>ChangedBy</th>
         <td>{{ $.Data.Upload.ChangedBy }}</td>
     </tr>
+    <tr>
+        <th>Debian Source Control (.dsc)</th>
+        <td>
+            <a href="/api/uploads/{{ $.Data.Upload.ID }}/source.dsc">dsc</a>
+        </td>
+    </tr>
 </table>
 
 <h2>Related jobs</h2>
@@ -47,7 +53,7 @@
     <tr>
         <td><a href="/jobs/{{ .ID}}">{{ .ID }}</a></td>
         <td>{{ .Type }}</td>
-        <td>{{ .Status }}</td>
+        <td class="{{ .Status | jobStatusTableClass }}">{{ .Status }}</td>
         <td>
             <a href="/api/jobs/{{ .ID }}/log.txt">log (txt)</a>
         </td>
