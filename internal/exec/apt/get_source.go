@@ -3,6 +3,7 @@ package apt
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,9 +21,9 @@ const (
 //getSourceFtpMasterAPI tries to mimic apt-get source but by using the
 //ftpmasterapi and dget.
 func getSourceFtpMasterAPI(pkg, distribution, directory string) error {
-	dscs, err := ftpmasterapi.GetDSCInSuite(pkg, distribution)
+	dscs, err := ftpmasterapi.NewClient(http.DefaultClient).GetDSCSInSuite(pkg, distribution)
 	if err != nil {
-		return errors.Errorf("ftpmasterapi error: %s", err)
+		return errors.WithMessagef(err, "cannot get dsc for pacakge %s in suite %s", pkg, distribution)
 	}
 
 	numberOfDSC := len(dscs)
@@ -43,7 +44,7 @@ func getSourceFtpMasterAPI(pkg, distribution, directory string) error {
 	command.Dir = directory
 
 	if err := command.Run(); err != nil {
-		return errors.Errorf("dget error: %s", err)
+		return errors.WithMessage(err, "dget failed")
 	}
 
 	return nil
@@ -55,24 +56,26 @@ func GetLatestDebianDirectory(pkg, destDir string) error {
 	//Create a directory to download the source
 	aptGetSourceDir, err := ioutil.TempDir("", "")
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "coult not create temp directory")
 	}
 	defer os.RemoveAll(aptGetSourceDir)
 
 	//Download the latest source from unstable
 	if err := getSourceFtpMasterAPI(pkg, "unstable", aptGetSourceDir); err != nil {
-		return err
+		return errors.WithMessage(err, "could not get the latest source")
 	}
 
 	//Find the debian tarball and unpack it
 	debianTarballPath, err := findDebianTarballInSourceDirectory(aptGetSourceDir)
 	if err != nil {
-		return err
+		return errors.WithMessage(err, "could not find the debian tarball to unpack")
 	}
 
-	err = tar.Untar(debianTarballPath, destDir)
+	if err := tar.Untar(debianTarballPath, destDir); err != nil {
+		return errors.WithMessagef(err, "could not untar %s to %s", debianTarballPath, destDir)
+	}
 
-	return err
+	return nil
 }
 
 //findDebianTarballInSourceDirectory returns the path of the debian tarball
@@ -80,7 +83,7 @@ func GetLatestDebianDirectory(pkg, destDir string) error {
 func findDebianTarballInSourceDirectory(directory string) (string, error) {
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {
-		return "", err
+		return "", errors.WithMessagef(err, "could not read dir %s", directory)
 	}
 
 	for _, file := range files {
