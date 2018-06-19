@@ -1,8 +1,8 @@
-autodeb (0.12.3-1) UNRELEASED; urgency=medium
+autodeb (0.12.3-1) pages; urgency=medium
 
-  * New upstream version.
+  * Unofficial Debian package.
 
- -- Alexandre Viau <aviau@debian.org>  Tue, 19 Jun 2018 01:26:40 -0400
+ -- Alexandre Viau <aviau@debian.org>  Tue, 19 Jun 2018 01:27:01 -0400
 
 autodeb (0.12.2-2) unstable; urgency=medium
 
