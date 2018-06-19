@@ -1,3 +1,9 @@
+autodeb (0.12.2-2) unstable; urgency=medium
+
+  * Worker: depend on autopkgtest and autodep8.
+
+ -- Alexandre Viau <aviau@debian.org>  Tue, 19 Jun 2018 01:07:34 -0400
+
 autodeb (0.12.2-1) unstable; urgency=medium
 
   * New upstream version.
