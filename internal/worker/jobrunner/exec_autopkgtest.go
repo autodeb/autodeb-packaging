@@ -6,9 +6,7 @@ import (
 	"io"
 	"os"
 	osexec "os/exec"
-	"path"
 	"path/filepath"
-	"strconv"
 	"syscall"
 
 	"salsa.debian.org/autodeb-team/autodeb/internal/errors"
@@ -23,40 +21,26 @@ func (jobRunner *JobRunner) execAutopkgtest(
 	artifactsDirectory string,
 	logFile io.Writer) error {
 
-	// The job input is a build job
-	buildJobID, err := strconv.Atoi(job.Input)
-	if err != nil {
-		return errors.WithMessage(err, "could not convert input to int")
-	}
-
-	// Get the .dsc URL
-	dscURL := jobRunner.apiClient.GetUploadDSCURL(job.ParentID)
-	dscFileName := path.Base(dscURL.EscapedPath())
-
-	// Download the source
-	if err := exec.RunCtxDirStdoutStderr(
-		ctx, workingDirectory, logFile, logFile,
-		"dget", "--allow-unauthenticated", dscURL.String(),
-	); err != nil {
-		return errors.WithMessage(err, "dget failed")
-	}
-
 	// Get the artifacts of the build job
-	artifacts, err := jobRunner.apiClient.GetJobArtifacts(uint(buildJobID))
+	artifacts, err := jobRunner.apiClient.GetJobArtifacts(job.BuildJobID)
 	if err != nil {
 		return errors.WithMessage(err, "could not get job artifacts")
 	}
 
-	var debFilenames []string
+	// Autopkgtest input files
+	var inputFiles []string
 
-	// Get the artifacts (debs) that we should test
+	// Download all artifacts from the build
 	for _, artifact := range artifacts {
 
-		if filepath.Ext(artifact.Filename) != ".deb" {
-			continue
+		switch filepath.Ext(artifact.Filename) {
+		case ".deb", ".dsc":
+			inputFiles = append(inputFiles, artifact.Filename)
+		default:
+			// Not an input file but we still need to download it.
 		}
 
-		// Get the deb
+		// Get the artifact
 		artifactContent, err := jobRunner.apiClient.GetArtifactContent(artifact.ID)
 		if err != nil {
 			return errors.WithMessage(err, "could not get the artifact content")
@@ -66,14 +50,13 @@ func (jobRunner *JobRunner) execAutopkgtest(
 		debPath := filepath.Join(workingDirectory, artifact.Filename)
 		deb, err := os.Create(debPath)
 		if err != nil {
-			return errors.WithMessage(err, "could not create deb")
+			return errors.WithMessagef(err, "could not create artifact file %s", debPath)
 		}
 		defer deb.Close()
 		if _, err := io.Copy(deb, artifactContent); err != nil {
-			return errors.WithMessage(err, "could not copt artifact content to deb")
+			return errors.WithMessage(err, "could not copy artifact content to file")
 		}
 
-		debFilenames = append(debFilenames, artifact.Filename)
 	}
 
 	args := []string{
@@ -81,11 +64,10 @@ func (jobRunner *JobRunner) execAutopkgtest(
 	}
 	args = append(
 		args,
-		debFilenames...,
+		inputFiles...,
 	)
 	args = append(
 		args,
-		dscFileName,
 		"--",
 		"schroot",
 		"unstable-amd64-sbuild",

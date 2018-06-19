@@ -13,7 +13,7 @@ import (
 	"salsa.debian.org/autodeb-team/autodeb/internal/server/models"
 )
 
-func (jobRunner *JobRunner) execBuild(
+func (jobRunner *JobRunner) execBuildUpload(
 	ctx context.Context,
 	job *models.Job,
 	workingDirectory string,
@@ -52,6 +52,7 @@ func (jobRunner *JobRunner) execBuild(
 		"--no-clean-source",
 		"--nolog",
 		"--arch-all",
+		"--source",
 	); err != nil {
 		return errors.WithMessage(err, "sbuild failed")
 	}

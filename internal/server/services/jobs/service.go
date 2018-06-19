@@ -54,6 +54,11 @@ func (service *Service) GetAllJobs() ([]*models.Job, error) {
 	return service.db.GetAllJobs()
 }
 
+// GetAllJobsPageLimit returns all jobs with pagination
+func (service *Service) GetAllJobsPageLimit(page, limit int) ([]*models.Job, error) {
+	return service.db.GetAllJobsPageLimit(page, limit)
+}
+
 // GetAllJobsByUploadID returns all jobs for a given upload
 func (service *Service) GetAllJobsByUploadID(uploadID uint) ([]*models.Job, error) {
 	return service.db.GetAllJobsByUploadID(uploadID)
@@ -61,8 +66,20 @@ func (service *Service) GetAllJobsByUploadID(uploadID uint) ([]*models.Job, erro
 
 // GetAllUncompletedJobsByUploadID returns all uncompleted jobs for a given upload
 func (service *Service) GetAllUncompletedJobsByUploadID(uploadID uint) ([]*models.Job, error) {
-	jobs, err := service.db.GetAllJobsByUploadIDStatuses(
+	jobs, err := service.db.GetAllJobsByParentAndStatuses(
+		models.JobParentTypeUpload,
 		uploadID,
+		models.JobStatusAssigned,
+		models.JobStatusQueued,
+	)
+	return jobs, err
+}
+
+// GetAllUncompletedJobsByArchiveUpgradeID returns all uncompleted jobs for a given archive rebuild
+func (service *Service) GetAllUncompletedJobsByArchiveUpgradeID(archiveRebuildID uint) ([]*models.Job, error) {
+	jobs, err := service.db.GetAllJobsByParentAndStatuses(
+		models.JobParentTypeArchiveUpgrade,
+		archiveRebuildID,
 		models.JobStatusAssigned,
 		models.JobStatusQueued,
 	)
@@ -71,7 +88,8 @@ func (service *Service) GetAllUncompletedJobsByUploadID(uploadID uint) ([]*model
 
 // GetAllFailedJobsByUploadID returns all failed jobs for a given upload
 func (service *Service) GetAllFailedJobsByUploadID(uploadID uint) ([]*models.Job, error) {
-	jobs, err := service.db.GetAllJobsByUploadIDStatuses(
+	jobs, err := service.db.GetAllJobsByParentAndStatuses(
+		models.JobParentTypeUpload,
 		uploadID,
 		models.JobStatusFailed,
 	)
@@ -101,8 +119,58 @@ func (service *Service) UnqueueNextJob() (*models.Job, error) {
 }
 
 //CreateJob creates a new job
-func (service *Service) CreateJob(jobType models.JobType, input string, parentType models.JobParentType, parentID uint) (*models.Job, error) {
-	return service.db.CreateJob(jobType, input, parentType, parentID)
+func (service *Service) CreateJob(jobType models.JobType, input string, buildJobID uint, parentType models.JobParentType, parentID uint) (*models.Job, error) {
+	return service.db.CreateJob(
+		jobType,
+		input,
+		buildJobID,
+		parentType,
+		parentID,
+	)
+}
+
+//CreateBuildUploadJob creates a build job
+func (service *Service) CreateBuildUploadJob(uploadID uint) (*models.Job, error) {
+	return service.db.CreateJob(
+		models.JobTypeBuildUpload,
+		"",
+		0,
+		models.JobParentTypeUpload,
+		uploadID,
+	)
+}
+
+//CreateForwardJob creates an upload forward job
+func (service *Service) CreateForwardJob(uploadID uint) (*models.Job, error) {
+	return service.db.CreateJob(
+		models.JobTypeForwardUpload,
+		"",
+		0,
+		models.JobParentTypeUpload,
+		uploadID,
+	)
+}
+
+//CreateAutopkgtestJobFromBuildJob creates an autopkgtest job from the build job
+func (service *Service) CreateAutopkgtestJobFromBuildJob(buildJob *models.Job) (*models.Job, error) {
+	return service.CreateJob(
+		models.JobTypeAutopkgtest,
+		"",
+		buildJob.ID,
+		buildJob.ParentType,
+		buildJob.ParentID,
+	)
+}
+
+//CreateArchiveUpgradeRepositoryJob creates a CreateArchiveUpgradeRepository job
+func (service *Service) CreateArchiveUpgradeRepositoryJob(archiveUpgradeID uint) (*models.Job, error) {
+	return service.CreateJob(
+		models.JobTypeCreateArchiveUpgradeRepository,
+		"",
+		0,
+		models.JobParentTypeArchiveUpgrade,
+		archiveUpgradeID,
+	)
 }
 
 // GetJob returns the job with the given id
