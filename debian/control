@@ -46,6 +46,8 @@ Depends: ${misc:Depends},
          ${shlibs:Depends},
          adduser,
          sbuild,
+         autopkgtest,
+         autodep8,
          devscripts
 Description: runs autodeb jobs
  Autodeb is a service that provides a way to test Debian source packages.
