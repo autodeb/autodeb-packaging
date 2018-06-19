@@ -6,25 +6,28 @@ type JobType int
 // Job Type enum
 const (
 	JobTypeUnknown JobType = iota
-	JobTypeBuild
+	JobTypeBuildUpload
 	JobTypeAutopkgtest
-	JobTypeForward
+	JobTypeForwardUpload
 	JobTypeSetupArchiveUpgrade
 	JobTypePackageUpgrade
+	JobTypeCreateArchiveUpgradeRepository
 )
 
 func (jt JobType) String() string {
 	switch jt {
-	case JobTypeBuild:
-		return "build"
+	case JobTypeBuildUpload:
+		return "build-upload"
 	case JobTypeAutopkgtest:
 		return "autopkgtest"
-	case JobTypeForward:
-		return "forward"
+	case JobTypeForwardUpload:
+		return "forward-upload"
 	case JobTypeSetupArchiveUpgrade:
 		return "setup-archive-upgrade"
 	case JobTypePackageUpgrade:
 		return "package-upgrade"
+	case JobTypeCreateArchiveUpgradeRepository:
+		return "create-archive-upgrade-repository"
 	default:
 		return "unknown"
 	}
@@ -86,10 +89,17 @@ type Job struct {
 
 	// == Job parent ==
 
-	// The ID of the Job's parent.
-	// It is propagated to all child jobs.
+	// Jobs can be created in the context of:
+	//  - An Upload
+	//  - An Archive Rebuild
+	// The id of the job's ultimate parent is propagated
+	// to all child jobs.
 	ParentID   uint          `json:"parent_id"`
 	ParentType JobParentType `json:"parent_type"`
+
+	// Some jobs are associated to a build job. For example, an Autopkgtest job
+	// will test the result of a build job
+	BuildJobID uint `json:"build_job_id"`
 
 	// == JOB INPUTS ==
 

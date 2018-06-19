@@ -15,6 +15,7 @@ func (service *Service) CreateArchiveUpgrade(userID uint, packageCount uint) (*m
 	if _, err := service.db.CreateJob(
 		models.JobTypeSetupArchiveUpgrade,
 		"",
+		0,
 		models.JobParentTypeArchiveUpgrade,
 		archiveUpgrade.ID,
 	); err != nil {
@@ -34,6 +35,11 @@ func (service *Service) GetAllArchiveUpgrades() ([]*models.ArchiveUpgrade, error
 	return service.db.GetAllArchiveUpgrades()
 }
 
+// GetAllArchiveUpgradesPageLimit returns all ArchiveUpgrades with pagination
+func (service *Service) GetAllArchiveUpgradesPageLimit(page, limit int) ([]*models.ArchiveUpgrade, error) {
+	return service.db.GetAllArchiveUpgradesPageLimit(page, limit)
+}
+
 // GetAllArchiveUpgradesByUserID returns all ArchiveUpgrades for a User ID
 func (service *Service) GetAllArchiveUpgradesByUserID(userID uint) ([]*models.ArchiveUpgrade, error) {
 	return service.db.GetAllArchiveUpgradesByUserID(userID)
@@ -42,4 +48,9 @@ func (service *Service) GetAllArchiveUpgradesByUserID(userID uint) ([]*models.Ar
 // GetAllJobsByArchiveUpgradeID returns all jobs for an ArchiveUpgrade
 func (service *Service) GetAllJobsByArchiveUpgradeID(id uint) ([]*models.Job, error) {
 	return service.db.GetAllJobsByArchiveUpgradeID(id)
+}
+
+// GetAllJobsByArchiveUpgradeIDPageLimit returns all jobs for an ArchiveUpgrade
+func (service *Service) GetAllJobsByArchiveUpgradeIDPageLimit(id uint, page, limit int) ([]*models.Job, error) {
+	return service.db.GetAllJobsByArchiveUpgradeIDPageLimit(id, page, limit)
 }

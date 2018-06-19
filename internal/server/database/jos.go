@@ -8,11 +8,12 @@ import (
 )
 
 // CreateJob will create a job
-func (db *Database) CreateJob(jobType models.JobType, input string, parentType models.JobParentType, parentID uint) (*models.Job, error) {
+func (db *Database) CreateJob(jobType models.JobType, input string, buildJobID uint, parentType models.JobParentType, parentID uint) (*models.Job, error) {
 	job := &models.Job{
 		Type:       jobType,
 		Input:      input,
 		Status:     models.JobStatusQueued,
+		BuildJobID: buildJobID,
 		ParentID:   parentID,
 		ParentType: parentType,
 	}
@@ -29,6 +30,29 @@ func (db *Database) GetAllJobs() ([]*models.Job, error) {
 	var jobs []*models.Job
 
 	if err := db.gormDB.Model(&models.Job{}).Find(&jobs).Error; err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
+}
+
+// GetAllJobsPageLimit returns all jobs with pagination
+func (db *Database) GetAllJobsPageLimit(page, limit int) ([]*models.Job, error) {
+	offset := page * limit
+
+	var jobs []*models.Job
+
+	query := db.gormDB.Model(
+		&models.Job{},
+	).Order(
+		"id desc",
+	).Offset(
+		offset,
+	).Limit(
+		limit,
+	)
+
+	if err := query.Find(&jobs).Error; err != nil {
 		return nil, err
 	}
 
@@ -66,8 +90,8 @@ func (db *Database) ChangeJobStatus(jobID uint, newStatus models.JobStatus) erro
 	return nil
 }
 
-// GetAllJobsByUploadIDStatuses returns all jobs that match the given id and statuses
-func (db *Database) GetAllJobsByUploadIDStatuses(uploadID uint, statuses ...models.JobStatus) ([]*models.Job, error) {
+// GetAllJobsByParentAndStatuses returns all jobs that match the given id and statuses
+func (db *Database) GetAllJobsByParentAndStatuses(parentType models.JobParentType, parentID uint, statuses ...models.JobStatus) ([]*models.Job, error) {
 	var jobs []*models.Job
 
 	query := db.gormDB.Model(
@@ -81,8 +105,8 @@ func (db *Database) GetAllJobsByUploadIDStatuses(uploadID uint, statuses ...mode
 
 		query = query.Where(
 			&models.Job{
-				ParentID:   uploadID,
-				ParentType: models.JobParentTypeUpload,
+				ParentID:   parentID,
+				ParentType: parentType,
 				Status:     status,
 			},
 		)
@@ -92,8 +116,8 @@ func (db *Database) GetAllJobsByUploadIDStatuses(uploadID uint, statuses ...mode
 	for _, status := range statuses[0:] {
 		query = query.Or(
 			&models.Job{
-				ParentID:   uploadID,
-				ParentType: models.JobParentTypeUpload,
+				ParentID:   parentID,
+				ParentType: parentType,
 				Status:     status,
 			},
 		)
@@ -137,6 +161,34 @@ func (db *Database) GetAllJobsByArchiveUpgradeID(id uint) ([]*models.Job, error)
 			ParentType: models.JobParentTypeArchiveUpgrade,
 			ParentID:   id,
 		},
+	)
+
+	if err := query.Find(&jobs).Error; err != nil {
+		return nil, err
+	}
+
+	return jobs, nil
+}
+
+// GetAllJobsByArchiveUpgradeIDPageLimit returns all jobs with pagination
+func (db *Database) GetAllJobsByArchiveUpgradeIDPageLimit(id uint, page, limit int) ([]*models.Job, error) {
+	offset := page * limit
+
+	var jobs []*models.Job
+
+	query := db.gormDB.Model(
+		&models.Job{},
+	).Where(
+		&models.Job{
+			ParentType: models.JobParentTypeArchiveUpgrade,
+			ParentID:   id,
+		},
+	).Order(
+		"id desc",
+	).Offset(
+		offset,
+	).Limit(
+		limit,
 	)
 
 	if err := query.Find(&jobs).Error; err != nil {
