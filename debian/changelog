@@ -1,9 +1,9 @@
-autodeb (0.14.1-1) UNRELEASED; urgency=medium
+autodeb (0.14.1-1) unstable; urgency=medium
 
   * New upstream version.
   * d/control: golang-pault-go-debian-dev (>= 0.9)
 
- -- Alexandre Viau <aviau@debian.org>  Fri, 29 Jun 2018 15:32:10 -0400
+ -- Alexandre Viau <aviau@debian.org>  Fri, 29 Jun 2018 16:09:09 -0400
 
 autodeb (0.13.0-1) unstable; urgency=medium
 
