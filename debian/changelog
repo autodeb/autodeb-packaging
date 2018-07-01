@@ -1,3 +1,9 @@
+autodeb (0.15.1-1) unstable; urgency=medium
+
+  * New upstream version.
+
+ -- Alexandre Viau <aviau@debian.org>  Sun, 01 Jul 2018 01:46:09 -0400
+
 autodeb (0.15.0-2) unstable; urgency=medium
 
   * autodeb-worker: depend on quilt.
