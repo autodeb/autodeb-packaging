@@ -1,6 +1,6 @@
-autodeb (0.15.0-2) unstable; urgency=medium
+autodeb (0.15.0-2) pages; urgency=medium
 
-  * autodeb-worker: depend on quilt.
+  * Unofficial Debian package.
 
  -- Alexandre Viau <aviau@debian.org>  Sun, 01 Jul 2018 01:05:19 -0400
 
