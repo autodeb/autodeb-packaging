@@ -1,7 +1,6 @@
-autodeb (0.16.1-1) unstable; urgency=medium
+autodeb (0.16.1-1) pages; urgency=medium
 
-  * New upstream version.
-  * Remove quilt dependency.
+  * Unoffical Debian package.
 
  -- Alexandre Viau <aviau@debian.org>  Wed, 11 Jul 2018 23:48:57 -0400
 
