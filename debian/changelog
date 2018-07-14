@@ -1,6 +1,6 @@
-autodeb (0.17.0-1) unstable; urgency=medium
+autodeb (0.17.0-1) pages; urgency=medium
 
-  * New upstream version.
+  * Unofficial Debian pacakge.
 
  -- Alexandre Viau <aviau@debian.org>  Sat, 14 Jul 2018 01:11:54 -0400
 
