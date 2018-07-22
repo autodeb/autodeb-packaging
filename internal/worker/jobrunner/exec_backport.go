@@ -38,7 +38,7 @@ func (jobRunner *JobRunner) execBackport(
 	// Download the source
 	if err := exec.RunCtxDirStdoutStderr(
 		ctx, workingDirectory, logFile, logFile,
-		"dget", dscURL,
+		"dget", "--allow-unauthenticated", dscURL,
 	); err != nil {
 		return errors.WithMessage(err, "dget failed")
 	}
@@ -47,7 +47,7 @@ func (jobRunner *JobRunner) execBackport(
 	dirs, err := getDirectories(workingDirectory)
 	if err != nil {
 		return errors.WithMessagef(err, "could not obtain the list of directories in %s", workingDirectory)
-	} else if len(dirs) > 0 {
+	} else if len(dirs) > 1 {
 		return errors.Errorf("too many directories, cannot guess which one contains the source: %s", dirs)
 	}
 	sourceDirectory := filepath.Join(workingDirectory, dirs[0])
