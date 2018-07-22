@@ -1,6 +1,6 @@
-autodeb (0.18.0-1) UNRELEASED; urgency=medium
+autodeb (0.18.0-1) pages; urgency=medium
 
-  * New upstream version.
+  * Unofficial Debian package.
 
  -- Alexandre Viau <aviau@debian.org>  Sun, 22 Jul 2018 13:57:19 -0400
 
